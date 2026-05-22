@@ -1,0 +1,287 @@
+// Inline tokenizer.
+//
+// Called by the parser on accumulated paragraph / heading / list-item text.
+// Produces a flat sequence of inline tokens; pairing of strong/em/strike
+// delimiters is performed at parse time (CommonMark §6.2 "process emphasis").
+//
+// Non-incremental on purpose: paragraphs are small and re-tokenizing the
+// whole string on each chunk is cheap. The expensive incremental work
+// (block detection, code-block highlighting) happens elsewhere.
+
+import 'token.dart';
+
+class InlineTokenizer {
+  const InlineTokenizer._();
+
+  /// Tokenize [text] into a flat list of inline tokens.
+  static List<Token> tokenize(String text) {
+    final out = <Token>[];
+    final buf = StringBuffer();
+    var i = 0;
+
+    void flushText() {
+      if (buf.isNotEmpty) {
+        out.add(InlineTextToken(buf.toString()));
+        buf.clear();
+      }
+    }
+
+    while (i < text.length) {
+      final c = text[i];
+      final code = text.codeUnitAt(i);
+
+      // Backslash escape: \X → literal X.
+      if (c == r'\' && i + 1 < text.length) {
+        final next = text[i + 1];
+        if (_escapableRe.hasMatch(next)) {
+          buf.write(next);
+          i += 2;
+          continue;
+        }
+      }
+
+      // Hard line break: trailing 2+ spaces before \n, or trailing `\` before \n.
+      if (code == 0x0A) {
+        // bare newline already handled below as soft break (we just drop it
+        // and let the renderer treat consecutive runs as joined).
+        // But if buf ends with 2+ spaces or last token is `\`, emit hard break.
+        final s = buf.toString();
+        if (s.endsWith('  ')) {
+          buf.clear();
+          buf.write(s.replaceFirst(RegExp(r' +$'), ''));
+          flushText();
+          out.add(const HardBreakToken());
+          i++;
+          continue;
+        }
+        if (s.endsWith(r'\')) {
+          buf.clear();
+          buf.write(s.substring(0, s.length - 1));
+          flushText();
+          out.add(const HardBreakToken());
+          i++;
+          continue;
+        }
+        // Soft break — collapse to a single space.
+        buf.write(' ');
+        i++;
+        continue;
+      }
+
+      // Inline code: `…`, ``…``, etc. Match opening run, find matching closing run.
+      if (c == '`') {
+        var runLen = 0;
+        while (i + runLen < text.length && text[i + runLen] == '`') {
+          runLen++;
+        }
+        final closeIdx = _findCodeSpanClose(text, i + runLen, runLen);
+        if (closeIdx != -1) {
+          flushText();
+          var content = text.substring(i + runLen, closeIdx);
+          // CommonMark: strip a single space on each side if both present and
+          // content is not all spaces.
+          if (content.length >= 2 &&
+              content.startsWith(' ') &&
+              content.endsWith(' ') &&
+              content.trim().isNotEmpty) {
+            content = content.substring(1, content.length - 1);
+          }
+          out.add(CodeSpanToken(content));
+          i = closeIdx + runLen;
+          continue;
+        }
+        // No close — treat as literal.
+        for (var k = 0; k < runLen; k++) {
+          buf.write('`');
+        }
+        i += runLen;
+        continue;
+      }
+
+      // Autolink: <http(s)://…> or <mailto:…>.
+      if (c == '<') {
+        final closeIdx = text.indexOf('>', i + 1);
+        if (closeIdx != -1) {
+          final inner = text.substring(i + 1, closeIdx);
+          if (_autolinkRe.hasMatch(inner)) {
+            flushText();
+            out.add(AutolinkToken(inner));
+            i = closeIdx + 1;
+            continue;
+          }
+        }
+      }
+
+      // Image: ![alt](url) — must come before link check because `!` is the marker.
+      if (c == '!' && i + 1 < text.length && text[i + 1] == '[') {
+        final parsed = _tryParseLink(text, i + 1, isImage: true);
+        if (parsed != null) {
+          flushText();
+          out.add(parsed.token);
+          i = parsed.end;
+          continue;
+        }
+      }
+
+      // Link: [text](url) or [text](url "title").
+      if (c == '[') {
+        final parsed = _tryParseLink(text, i, isImage: false);
+        if (parsed != null) {
+          flushText();
+          out.add(parsed.token);
+          i = parsed.end;
+          continue;
+        }
+      }
+
+      // Strong / emphasis: `**`, `__`, `*`, `_`.
+      if (c == '*' || c == '_') {
+        var runLen = 0;
+        while (i + runLen < text.length && text[i + runLen] == c) {
+          runLen++;
+        }
+        flushText();
+        // Emit one StrongDelim per `**` pair, plus one Emphasis for any leftover.
+        var emitted = 0;
+        while (emitted + 2 <= runLen) {
+          out.add(const StrongDelimToken());
+          emitted += 2;
+        }
+        if (emitted < runLen) {
+          out.add(EmphasisDelimToken(c));
+          emitted++;
+        }
+        i += runLen;
+        continue;
+      }
+
+      // Strikethrough: ~~.
+      if (c == '~' && i + 1 < text.length && text[i + 1] == '~') {
+        flushText();
+        out.add(const StrikeDelimToken());
+        i += 2;
+        continue;
+      }
+
+      buf.write(c);
+      i++;
+    }
+
+    flushText();
+    return out;
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+
+  static int _findCodeSpanClose(String text, int from, int runLen) {
+    var i = from;
+    while (i < text.length) {
+      if (text[i] == '`') {
+        var n = 0;
+        while (i + n < text.length && text[i + n] == '`') {
+          n++;
+        }
+        if (n == runLen) return i;
+        i += n;
+        continue;
+      }
+      i++;
+    }
+    return -1;
+  }
+
+  static _LinkParseResult? _tryParseLink(
+    String text,
+    int start, {
+    required bool isImage,
+  }) {
+    // Expects text[start] == '['.
+    if (start >= text.length || text[start] != '[') return null;
+
+    // Find matching `]` allowing one level of nested brackets in the text.
+    var depth = 1;
+    var i = start + 1;
+    while (i < text.length && depth > 0) {
+      final c = text[i];
+      if (c == r'\' && i + 1 < text.length) {
+        i += 2;
+        continue;
+      }
+      if (c == '[') depth++;
+      if (c == ']') {
+        depth--;
+        if (depth == 0) break;
+      }
+      i++;
+    }
+    if (depth != 0) return null;
+    final closeBracket = i;
+    if (closeBracket + 1 >= text.length || text[closeBracket + 1] != '(') {
+      return null;
+    }
+
+    // Parse the (url "title") part.
+    var j = closeBracket + 2;
+    // Skip leading whitespace.
+    while (j < text.length && (text[j] == ' ' || text[j] == '\t')) {
+      j++;
+    }
+    final urlStart = j;
+    // URL: until whitespace or `)` or `"`.
+    while (j < text.length) {
+      final c = text[j];
+      if (c == ')' || c == ' ' || c == '\t' || c == '"') break;
+      if (c == r'\' && j + 1 < text.length) {
+        j += 2;
+        continue;
+      }
+      j++;
+    }
+    final urlEnd = j;
+
+    // Optional title.
+    String? title;
+    while (j < text.length && (text[j] == ' ' || text[j] == '\t')) {
+      j++;
+    }
+    if (j < text.length && text[j] == '"') {
+      final titleStart = j + 1;
+      var k = titleStart;
+      while (k < text.length && text[k] != '"') {
+        if (text[k] == r'\' && k + 1 < text.length) {
+          k += 2;
+          continue;
+        }
+        k++;
+      }
+      if (k >= text.length) return null;
+      title = text.substring(titleStart, k);
+      j = k + 1;
+      while (j < text.length && (text[j] == ' ' || text[j] == '\t')) {
+        j++;
+      }
+    }
+
+    if (j >= text.length || text[j] != ')') return null;
+
+    final linkText = text.substring(start + 1, closeBracket);
+    final url = text.substring(urlStart, urlEnd);
+    return _LinkParseResult(
+      LinkToken(text: linkText, url: url, title: title, isImage: isImage),
+      j + 1,
+    );
+  }
+}
+
+class _LinkParseResult {
+  const _LinkParseResult(this.token, this.end);
+
+  final LinkToken token;
+  final int end;
+}
+
+final RegExp _escapableRe = RegExp(r'[\\`*_{}\[\]()#+\-.!~|]');
+
+final RegExp _autolinkRe = RegExp(
+  r'^(?:https?://[^\s<>]+|mailto:[^\s<>@]+@[^\s<>]+)$',
+);
