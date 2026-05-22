@@ -85,7 +85,10 @@ void main() {
 
     testWidgets('renders a fenced code block', (tester) async {
       await pumpStatic(tester, '```dart\nprint(42);\n```\n');
-      expect(find.textContaining('print(42);'), findsWidgets);
+      expect(
+        find.textContaining('print(42);', findRichText: true),
+        findsWidgets,
+      );
     });
 
     testWidgets('renders a GFM table', (tester) async {

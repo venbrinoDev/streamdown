@@ -10,7 +10,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../parser/ast.dart';
+import 'code_block.dart';
 import 'inline_spans.dart';
+import 'syntax_theme.dart';
 
 /// Walks a [DocumentNode] and emits a [Column] of block widgets. Stateful
 /// so it can own the [GestureRecognizer]s created for link taps (and dispose
@@ -19,13 +21,17 @@ class AstRenderer extends StatefulWidget {
   const AstRenderer({
     super.key,
     required this.document,
+    required this.syntaxTheme,
     this.textStyle,
     this.onLinkTap,
+    this.codeBlockBuilder,
   });
 
   final DocumentNode document;
   final TextStyle? textStyle;
   final void Function(Uri uri)? onLinkTap;
+  final SyntaxTheme syntaxTheme;
+  final CodeBlockBuilder? codeBlockBuilder;
 
   @override
   State<AstRenderer> createState() => _AstRendererState();
@@ -100,9 +106,11 @@ class _AstRendererState extends State<AstRenderer> {
           recognizers: _recognizers,
           onLinkTap: widget.onLinkTap,
         ),
-      CodeBlockNode() => _CodeBlock(
+      CodeBlockNode() => CodeBlockWidget(
           key: ValueKey<int>(node.id),
           node: node,
+          syntaxTheme: widget.syntaxTheme,
+          builder: widget.codeBlockBuilder,
         ),
       TableNode() => _Table(
           key: ValueKey<int>(node.id),
@@ -338,37 +346,6 @@ class _ListItem extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _CodeBlock extends StatelessWidget {
-  const _CodeBlock({super.key, required this.node});
-
-  final CodeBlockNode node;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Text(
-          node.content,
-          style: TextStyle(
-            fontFamily: 'monospace',
-            fontFamilyFallback: const <String>['Courier', 'monospace'],
-            fontSize: 13,
-            height: 1.45,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-      ),
     );
   }
 }

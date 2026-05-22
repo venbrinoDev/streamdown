@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import '../parser/parser.dart';
 import '../parser/tokenizer.dart';
 import 'ast_renderer.dart';
+import 'syntax_theme.dart';
 
 /// Flicker-free streaming markdown widget.
 ///
@@ -34,6 +35,8 @@ class Streamdown extends StatefulWidget {
     this.selectable = true,
     this.onLinkTap,
     this.padding,
+    this.syntaxTheme,
+    this.codeBlockBuilder,
   })  : _stream = stream,
         _text = null;
 
@@ -46,6 +49,8 @@ class Streamdown extends StatefulWidget {
     this.selectable = true,
     this.onLinkTap,
     this.padding,
+    this.syntaxTheme,
+    this.codeBlockBuilder,
   })  : _stream = null,
         _text = text;
 
@@ -65,6 +70,15 @@ class Streamdown extends StatefulWidget {
 
   /// Optional padding around the rendered document.
   final EdgeInsetsGeometry? padding;
+
+  /// Override the syntax-highlight color scheme for fenced code blocks.
+  /// Defaults to [SyntaxTheme.auto] (follows ambient brightness).
+  final SyntaxTheme? syntaxTheme;
+
+  /// Full override for code block rendering. When non-null, this is called
+  /// instead of the default [CodeBlockWidget] for every fenced code block.
+  /// Useful for line numbers, custom themes, or non-standard layouts.
+  final CodeBlockBuilder? codeBlockBuilder;
 
   @override
   State<Streamdown> createState() => _StreamdownState();
@@ -135,6 +149,8 @@ class _StreamdownState extends State<Streamdown> {
       document: _parser.document,
       textStyle: widget.textStyle,
       onLinkTap: widget.onLinkTap,
+      syntaxTheme: widget.syntaxTheme ?? SyntaxTheme.auto(context),
+      codeBlockBuilder: widget.codeBlockBuilder,
     );
     final padded = widget.padding != null
         ? Padding(padding: widget.padding!, child: renderer)

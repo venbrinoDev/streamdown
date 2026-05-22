@@ -8,3 +8,4 @@
 library;
 
 export 'src/render/streamdown_widget.dart' show Streamdown;
+export 'src/render/syntax_theme.dart' show CodeBlockBuilder, SyntaxTheme;

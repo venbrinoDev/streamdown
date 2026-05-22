@@ -4,7 +4,7 @@ Living document. Update at the end of every working session.
 
 **Source of truth for:** What's done, what's in flight, what's blocked, current velocity.
 
-**Last updated:** 2026-05-22 (Phase 3 complete)
+**Last updated:** 2026-05-22 (Phase 4 complete)
 
 ---
 
@@ -12,16 +12,16 @@ Living document. Update at the end of every working session.
 
 | Metric | Value |
 |---|---|
-| Current phase | Phase 4 — Code Blocks (next) |
-| Phase progress | Phases 0–3: all ✅ |
+| Current phase | Phase 5 — Tables (next) |
+| Phase progress | Phases 0–4: all ✅ |
 | Days elapsed | 3 |
 | Days remaining (est.) | 6 |
 | Target ship date | 2026-06-01 |
-| 🔴 features done | ~26 / 62 |
+| 🔴 features done | ~47 / 62 (75%) |
 | 🔴 features in progress | 0 |
-| Test coverage | 187 tests passing (tokenizer + parser + widgets) |
+| Test coverage | 199 tests passing |
 | Open blockers | 0 |
-| Commits | 5 (origin/main at GitHub) |
+| Commits | 6 (origin/main at GitHub) |
 
 ---
 
@@ -33,8 +33,8 @@ Living document. Update at the end of every working session.
 | 1 | Tokenizer | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 8 / 8 | — |
 | 2 | Parser & AST | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 6 / 6 | — |
 | 3 | Renderer Core | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.5 | 8 / 8 | — |
-| 4 | Code Blocks | ⚪ Not started (ready) | — | — | — | 0 / 10 | — |
-| 5 | Tables | ⚪ Not started | — | — | — | 0 / 6 | Phase 3 |
+| 4 | Code Blocks | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 10 / 10 | — |
+| 5 | Tables | ⚪ Not started (ready) | — | — | — | 0 / 6 | — |
 | 6 | Polish & Optional | ⚪ Not started | — | — | — | 0 / 8 | Phase 5 |
 | 7 | Example App + Demo | ⚪ Not started | — | — | — | 0 / 10 | Phase 6 |
 | 8 | Testing & Perf | ⚪ Not started | — | — | — | 0 / 8 | Phase 6 |
@@ -85,16 +85,16 @@ Living document. Update at the end of every working session.
 | Streaming Engine | 8 | 4 | 0 | 0 |
 | Block-level Markdown | 13 | 8 | 0 | 0 |
 | Inline Markdown | 12 | 8 | 0 | 0 |
-| Code Blocks | 11 | 0 | 0 | 0 |
+| Code Blocks | 11 | 8 | 0 | 0 |
 | Tables | 6 | 0 | 0 | 0 |
 | Math / LaTeX | 4 | 0 | 0 | 0 |
-| Customization | 9 | 4 | 0 | 0 |
+| Customization | 9 | 6 | 0 | 0 |
 | Performance | 5 | 0 | 0 | 0 |
 | Developer Experience | 9 | 4 | 0 | 0 |
 | Quality / Testing | 8 | 3 | 0 | 0 |
 | Distribution | 6 | 1 | 0 | 0 |
 | Launch / Viral | 7 | 0 | 0 | 0 |
-| **Total** | **88** | **38** | **0** | **0** |
+| **Total** | **88** | **48** | **0** | **0** |
 
 ---
 
@@ -118,6 +118,8 @@ Record any non-obvious decision here so future-you (or future-Claude) doesn't re
 | 2026-05-22 | `SelectionArea` (Flutter 3.7+) at top level instead of `SelectableText.rich` per paragraph | One SelectionArea selects across blocks naturally; no per-element wrapping; cleaner widget tree; works with Text.rich children automatically |
 | 2026-05-22 | `AstRenderer` is a `StatefulWidget` so it can own and dispose `GestureRecognizer`s created for link taps | TapGestureRecognizers attached to TextSpans leak if not disposed; central ownership in renderer state is the simplest correct lifecycle |
 | 2026-05-22 | Block widget keys are `ValueKey(node.id)` derived from the parser's monotonic IDs | Closed nodes never get reassigned IDs, so Flutter's element diff preserves the same widget instances across stream feeds — no flicker, no rebuild |
+| 2026-05-22 | `flutter_highlight`'s `HighlightView` re-parses on every rebuild; we accept this for v0.1 because widget keys mean only the OPEN block re-parses during streaming | Per-line span caching is a Phase 8 optimization. For typical AI responses (~50 lines per code block, ~5ms per parse), the closed-block stability of the widget tree keeps real-world cost bounded |
+| 2026-05-22 | Fall back to plain `Text` (no highlighting) when fence has no info string | `HighlightView` throws `ArgumentError` on null language; plain Text avoids a crash and preserves the user's content intent (no language → no guesswork) |
 
 ---
 
@@ -139,6 +141,7 @@ Record any non-obvious decision here so future-you (or future-Claude) doesn't re
 | 2026-05-22 | 1 | 1.0 | Phase 1 complete: Token sealed hierarchy (16 token types), incremental block Tokenizer (line-based state machine, fence-aware), InlineTokenizer (delimiters + code spans + links/images + autolinks + hard breaks). 101 tests passing — chunked-vs-whole equivalence verified across 10 samples × 3 chunk sizes + append-only invariant + perf benchmark. |
 | 2026-05-22 | 2 | 1.0 | Phase 2 complete: AstNode sealed hierarchy (9 node types with monotonic IDs), Parser (token → AST with trailing-path-only mutation, table promotion via separator lookahead, list/blockquote state). 166 tests passing — snapshot tests for every block type + chunked-vs-whole AST equivalence across 10 samples × 3 chunk sizes + ID monotonicity + immutability of closed nodes. `complete()` preserves unclosed code blocks as OPEN signal. |
 | 2026-05-22 | 3 | 1.5 | Phase 3 complete: public `Streamdown` widget (stream + .text() constructors), `AstRenderer` (StatefulWidget owning GestureRecognizer lifecycle), inline span builder with stack-based strong/em/strike pairing, block widgets for headings/paragraphs/blockquotes/HR/lists/code/tables. 187 tests passing — every block type rendered + inline formatting + link tap recognizer + SelectionArea + element-persistence across chunk feeds (no key churn). Code blocks render plainly; Phase 4 will add syntax highlighting. Tables render basic GFM; Phase 5 will add alignment + provisional rows. |
+| 2026-05-22 | 4 | 1.0 | Phase 4 complete: `SyntaxTheme` (light/dark/auto), `CodeBlockWidget` (HighlightView under the hood, language label, top-right copy-to-clipboard button with 2s cooldown, horizontal scroll for long lines), `codeBlockBuilder` full-override hook on Streamdown. Fallback to plain Text when language is null (HighlightView crashes on null lang). 199 tests passing — including custom-builder invocation, clipboard mock verification, dark/light theme rendering, and code-block element persistence across multiple chunk feeds. |
 
 ---
 
