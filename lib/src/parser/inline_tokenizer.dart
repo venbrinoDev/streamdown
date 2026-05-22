@@ -14,7 +14,11 @@ class InlineTokenizer {
   const InlineTokenizer._();
 
   /// Tokenize [text] into a flat list of inline tokens.
-  static List<Token> tokenize(String text) {
+  ///
+  /// [latex] enables `$...$` (inline) and `$$...$$` (block) math detection.
+  /// When false (default), `$` is plain text — important so dollar amounts
+  /// like `$10` don't accidentally start math mode.
+  static List<Token> tokenize(String text, {bool latex = false}) {
     final out = <Token>[];
     final buf = StringBuffer();
     var i = 0;
@@ -96,6 +100,76 @@ class InlineTokenizer {
         }
         i += runLen;
         continue;
+      }
+
+      // Bare URL autolink: http(s)://...
+      if (c == 'h' &&
+          (text.startsWith('http://', i) ||
+              text.startsWith('https://', i))) {
+        var end = i;
+        while (end < text.length) {
+          final ch = text.codeUnitAt(end);
+          if (ch == 0x20 ||
+              ch == 0x09 ||
+              ch == 0x0A ||
+              ch == 0x3C ||
+              ch == 0x3E ||
+              ch == 0x22 ||
+              ch == 0x27) {
+            break;
+          }
+          end++;
+        }
+        // Strip trailing sentence punctuation that's almost certainly not
+        // part of the URL.
+        while (end > i + 8) {
+          final last = text.codeUnitAt(end - 1);
+          if (last == 0x2E /* . */ ||
+              last == 0x2C /* , */ ||
+              last == 0x21 /* ! */ ||
+              last == 0x3F /* ? */ ||
+              last == 0x29 /* ) */ ||
+              last == 0x3A /* : */ ||
+              last == 0x3B /* ; */) {
+            end--;
+          } else {
+            break;
+          }
+        }
+        flushText();
+        out.add(AutolinkToken(text.substring(i, end)));
+        i = end;
+        continue;
+      }
+
+      // LaTeX math (only when enabled).
+      if (latex && c == r'$') {
+        // Block math: $$...$$
+        if (i + 1 < text.length && text[i + 1] == r'$') {
+          final closeIdx = text.indexOf(r'$$', i + 2);
+          if (closeIdx != -1 && closeIdx > i + 2) {
+            flushText();
+            out.add(MathToken(text.substring(i + 2, closeIdx), isBlock: true));
+            i = closeIdx + 2;
+            continue;
+          }
+        }
+        // Inline math: $X$ where X starts and ends with non-space.
+        if (i + 1 < text.length &&
+            text[i + 1] != ' ' &&
+            text[i + 1] != r'$') {
+          final closeIdx = text.indexOf(r'$', i + 1);
+          if (closeIdx != -1 &&
+              closeIdx > i + 1 &&
+              text[closeIdx - 1] != ' ') {
+            flushText();
+            out.add(MathToken(
+              text.substring(i + 1, closeIdx),
+            ));
+            i = closeIdx + 1;
+            continue;
+          }
+        }
       }
 
       // Autolink: <http(s)://…> or <mailto:…>.

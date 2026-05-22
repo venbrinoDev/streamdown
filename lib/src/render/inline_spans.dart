@@ -11,6 +11,7 @@
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_math_fork/flutter_math.dart' show Math, MathStyle;
 
 import '../parser/inline_tokenizer.dart';
 import '../parser/token.dart';
@@ -27,8 +28,9 @@ List<InlineSpan> buildInlineSpans(
   TextStyle? baseStyle,
   void Function(Uri uri)? onLinkTap,
   required List<GestureRecognizer> recognizers,
+  bool latex = false,
 }) {
-  final tokens = InlineTokenizer.tokenize(text);
+  final tokens = InlineTokenizer.tokenize(text, latex: latex);
   final theme = Theme.of(context);
   final base = baseStyle ?? DefaultTextStyle.of(context).style;
 
@@ -100,11 +102,30 @@ List<InlineSpan> buildInlineSpans(
         spans.add(TextSpan(text: content, style: codeSpanStyle()));
       case LinkToken(:final text, :final url, :final isImage):
         if (isImage) {
-          // v0.1: render images as a fallback text span. Image loading lands
-          // in Phase 6 via the [imageBuilder] customization API.
-          spans.add(TextSpan(
-            text: '[$text]',
-            style: styleNow().copyWith(color: theme.disabledColor),
+          spans.add(WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Image.network(
+              url,
+              semanticLabel: text.isEmpty ? null : text,
+              errorBuilder: (context, error, stackTrace) => Text(
+                '[$text]',
+                style: styleNow().copyWith(color: theme.disabledColor),
+              ),
+              frameBuilder: (context, child, frame, wasSyncLoaded) {
+                if (wasSyncLoaded || frame != null) return child;
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  child: Text(
+                    text.isEmpty ? '...' : text,
+                    style: styleNow().copyWith(color: theme.disabledColor),
+                  ),
+                );
+              },
+            ),
           ));
         } else {
           spans.add(TextSpan(
@@ -121,6 +142,19 @@ List<InlineSpan> buildInlineSpans(
         ));
       case HardBreakToken():
         spans.add(const TextSpan(text: '\n'));
+      case MathToken(:final tex, :final isBlock):
+        spans.add(WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Math.tex(
+            tex,
+            mathStyle: isBlock ? MathStyle.display : MathStyle.text,
+            textStyle: styleNow(),
+            onErrorFallback: (error) => Text(
+              isBlock ? '\$\$$tex\$\$' : '\$$tex\$',
+              style: styleNow().copyWith(color: theme.colorScheme.error),
+            ),
+          ),
+        ));
       // Block-level tokens should never reach here.
       case HeadingToken() ||
             HorizontalRuleToken() ||

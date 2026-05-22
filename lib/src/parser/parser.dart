@@ -183,7 +183,8 @@ class Parser {
             CodeSpanToken() ||
             LinkToken() ||
             AutolinkToken() ||
-            HardBreakToken():
+            HardBreakToken() ||
+            MathToken():
         break;
     }
   }

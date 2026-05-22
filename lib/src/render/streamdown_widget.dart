@@ -37,6 +37,8 @@ class Streamdown extends StatefulWidget {
     this.padding,
     this.syntaxTheme,
     this.codeBlockBuilder,
+    this.latex = false,
+    this.errorBuilder,
   })  : _stream = stream,
         _text = null;
 
@@ -51,6 +53,8 @@ class Streamdown extends StatefulWidget {
     this.padding,
     this.syntaxTheme,
     this.codeBlockBuilder,
+    this.latex = false,
+    this.errorBuilder,
   })  : _stream = null,
         _text = text;
 
@@ -80,6 +84,19 @@ class Streamdown extends StatefulWidget {
   /// Useful for line numbers, custom themes, or non-standard layouts.
   final CodeBlockBuilder? codeBlockBuilder;
 
+  /// When true, `$...$` is rendered as inline LaTeX math and `$$...$$` as
+  /// block math via the `flutter_math_fork` package. Defaults to false so
+  /// dollar amounts (`$10`, `$20`) don't get treated as math.
+  final bool latex;
+
+  /// Called when the input stream emits an error. Returning null falls back
+  /// to silently dropping the error.
+  final Widget Function(
+    BuildContext context,
+    Object error,
+    StackTrace? stackTrace,
+  )? errorBuilder;
+
   @override
   State<Streamdown> createState() => _StreamdownState();
 }
@@ -88,6 +105,8 @@ class _StreamdownState extends State<Streamdown> {
   late Tokenizer _tokenizer;
   late Parser _parser;
   StreamSubscription<String>? _sub;
+  Object? _streamError;
+  StackTrace? _streamStack;
 
   @override
   void initState() {
@@ -115,6 +134,8 @@ class _StreamdownState extends State<Streamdown> {
   void _initPipeline() {
     _tokenizer = Tokenizer();
     _parser = Parser();
+    _streamError = null;
+    _streamStack = null;
     final text = widget._text;
     if (text != null) {
       _consume(text);
@@ -126,10 +147,18 @@ class _StreamdownState extends State<Streamdown> {
       _sub = stream.listen(
         _consume,
         onDone: _completeStream,
-        // v0.1: errors are silently swallowed; Phase 6 will add errorBuilder.
+        onError: _onStreamError,
         cancelOnError: false,
       );
     }
+  }
+
+  void _onStreamError(Object error, StackTrace stack) {
+    if (!mounted) return;
+    setState(() {
+      _streamError = error;
+      _streamStack = stack;
+    });
   }
 
   void _consume(String chunk) {
@@ -145,12 +174,16 @@ class _StreamdownState extends State<Streamdown> {
 
   @override
   Widget build(BuildContext context) {
+    if (_streamError != null && widget.errorBuilder != null) {
+      return widget.errorBuilder!(context, _streamError!, _streamStack);
+    }
     final renderer = AstRenderer(
       document: _parser.document,
       textStyle: widget.textStyle,
       onLinkTap: widget.onLinkTap,
       syntaxTheme: widget.syntaxTheme ?? SyntaxTheme.auto(context),
       codeBlockBuilder: widget.codeBlockBuilder,
+      latex: widget.latex,
     );
     final padded = widget.padding != null
         ? Padding(padding: widget.padding!, child: renderer)

@@ -386,6 +386,26 @@ final class AutolinkToken extends Token {
   String toString() => 'AutolinkToken(${_q(url)})';
 }
 
+/// `$...$` (inline) or `$$...$$` (block) TeX math, when LaTeX rendering is
+/// enabled on the parent widget. Otherwise the dollar signs are plain text.
+final class MathToken extends Token {
+  const MathToken(this.tex, {this.isBlock = false});
+
+  final String tex;
+  final bool isBlock;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MathToken && other.tex == tex && other.isBlock == isBlock;
+
+  @override
+  int get hashCode => Object.hash('math', tex, isBlock);
+
+  @override
+  String toString() => 'MathToken(${_q(tex)}, isBlock: $isBlock)';
+}
+
 /// Trailing two-or-more spaces before newline, or trailing `\` — hard line break.
 final class HardBreakToken extends Token {
   const HardBreakToken();

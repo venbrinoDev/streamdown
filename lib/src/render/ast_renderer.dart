@@ -26,6 +26,7 @@ class AstRenderer extends StatefulWidget {
     this.textStyle,
     this.onLinkTap,
     this.codeBlockBuilder,
+    this.latex = false,
   });
 
   final DocumentNode document;
@@ -33,6 +34,7 @@ class AstRenderer extends StatefulWidget {
   final void Function(Uri uri)? onLinkTap;
   final SyntaxTheme syntaxTheme;
   final CodeBlockBuilder? codeBlockBuilder;
+  final bool latex;
 
   @override
   State<AstRenderer> createState() => _AstRendererState();
@@ -77,6 +79,7 @@ class _AstRendererState extends State<AstRenderer> {
           baseStyle: widget.textStyle,
           recognizers: _recognizers,
           onLinkTap: widget.onLinkTap,
+          latex: widget.latex,
         ),
       ParagraphNode() => _Paragraph(
           key: ValueKey<int>(node.id),
@@ -84,6 +87,7 @@ class _AstRendererState extends State<AstRenderer> {
           baseStyle: widget.textStyle,
           recognizers: _recognizers,
           onLinkTap: widget.onLinkTap,
+          latex: widget.latex,
         ),
       HorizontalRuleNode() => Padding(
           key: ValueKey<int>(node.id),
@@ -99,6 +103,7 @@ class _AstRendererState extends State<AstRenderer> {
           baseStyle: widget.textStyle,
           recognizers: _recognizers,
           onLinkTap: widget.onLinkTap,
+          latex: widget.latex,
         ),
       ListNode() => _List(
           key: ValueKey<int>(node.id),
@@ -106,6 +111,7 @@ class _AstRendererState extends State<AstRenderer> {
           baseStyle: widget.textStyle,
           recognizers: _recognizers,
           onLinkTap: widget.onLinkTap,
+          latex: widget.latex,
         ),
       CodeBlockNode() => CodeBlockWidget(
           key: ValueKey<int>(node.id),
@@ -119,6 +125,7 @@ class _AstRendererState extends State<AstRenderer> {
           baseStyle: widget.textStyle,
           recognizers: _recognizers,
           onLinkTap: widget.onLinkTap,
+          latex: widget.latex,
         ),
       DocumentNode() ||
       ListItemNode() =>
@@ -139,12 +146,14 @@ class _Heading extends StatelessWidget {
     required this.recognizers,
     this.baseStyle,
     this.onLinkTap,
+    this.latex = false,
   });
 
   final HeadingNode node;
   final TextStyle? baseStyle;
   final List<GestureRecognizer> recognizers;
   final void Function(Uri uri)? onLinkTap;
+  final bool latex;
 
   @override
   Widget build(BuildContext context) {
@@ -168,6 +177,7 @@ class _Heading extends StatelessWidget {
           baseStyle: merged,
           onLinkTap: onLinkTap,
           recognizers: recognizers,
+          latex: latex,
         ),
       ),
     );
@@ -181,12 +191,14 @@ class _Paragraph extends StatelessWidget {
     required this.recognizers,
     this.baseStyle,
     this.onLinkTap,
+    this.latex = false,
   });
 
   final ParagraphNode node;
   final TextStyle? baseStyle;
   final List<GestureRecognizer> recognizers;
   final void Function(Uri uri)? onLinkTap;
+  final bool latex;
 
   @override
   Widget build(BuildContext context) {
@@ -198,6 +210,7 @@ class _Paragraph extends StatelessWidget {
           baseStyle: baseStyle,
           onLinkTap: onLinkTap,
           recognizers: recognizers,
+          latex: latex,
         ),
       ),
     );
@@ -211,12 +224,14 @@ class _Blockquote extends StatelessWidget {
     required this.recognizers,
     this.baseStyle,
     this.onLinkTap,
+    this.latex = false,
   });
 
   final BlockquoteNode node;
   final TextStyle? baseStyle;
   final List<GestureRecognizer> recognizers;
   final void Function(Uri uri)? onLinkTap;
+  final bool latex;
 
   @override
   Widget build(BuildContext context) {
@@ -246,6 +261,7 @@ class _Blockquote extends StatelessWidget {
           baseStyle: baseStyle,
           recognizers: recognizers,
           onLinkTap: onLinkTap,
+          latex: latex,
         ),
       HeadingNode() => _Heading(
           key: ValueKey<int>(child.id),
@@ -253,6 +269,7 @@ class _Blockquote extends StatelessWidget {
           baseStyle: baseStyle,
           recognizers: recognizers,
           onLinkTap: onLinkTap,
+          latex: latex,
         ),
       _ => const SizedBox.shrink(),
     };
@@ -266,12 +283,14 @@ class _List extends StatelessWidget {
     required this.recognizers,
     this.baseStyle,
     this.onLinkTap,
+    this.latex = false,
   });
 
   final ListNode node;
   final TextStyle? baseStyle;
   final List<GestureRecognizer> recognizers;
   final void Function(Uri uri)? onLinkTap;
+  final bool latex;
 
   @override
   Widget build(BuildContext context) {
@@ -289,6 +308,7 @@ class _List extends StatelessWidget {
             baseStyle: baseStyle,
             recognizers: recognizers,
             onLinkTap: onLinkTap,
+            latex: latex,
           ),
       ],
     );
@@ -311,6 +331,7 @@ class _ListItem extends StatelessWidget {
     required this.recognizers,
     this.baseStyle,
     this.onLinkTap,
+    this.latex = false,
   });
 
   final ListItemNode node;
@@ -318,6 +339,7 @@ class _ListItem extends StatelessWidget {
   final TextStyle? baseStyle;
   final List<GestureRecognizer> recognizers;
   final void Function(Uri uri)? onLinkTap;
+  final bool latex;
 
   @override
   Widget build(BuildContext context) {
@@ -343,6 +365,7 @@ class _ListItem extends StatelessWidget {
                     baseStyle: baseStyle,
                     recognizers: recognizers,
                     onLinkTap: onLinkTap,
+                    latex: latex,
                   )
                 else
                   const SizedBox.shrink(),

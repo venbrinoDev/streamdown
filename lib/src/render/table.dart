@@ -22,12 +22,14 @@ class TableWidget extends StatelessWidget {
     required this.recognizers,
     this.baseStyle,
     this.onLinkTap,
+    this.latex = false,
   });
 
   final TableNode node;
   final TextStyle? baseStyle;
   final List<GestureRecognizer> recognizers;
   final void Function(Uri uri)? onLinkTap;
+  final bool latex;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +54,7 @@ class TableWidget extends StatelessWidget {
                   baseStyle: (baseStyle ?? const TextStyle())
                       .copyWith(fontWeight: FontWeight.bold),
                   onLinkTap: onLinkTap,
+                  latex: latex,
                 ),
             ],
           ),
@@ -65,6 +68,7 @@ class TableWidget extends StatelessWidget {
                     recognizers: recognizers,
                     baseStyle: baseStyle,
                     onLinkTap: onLinkTap,
+                    latex: latex,
                   ),
               ],
             ),
@@ -86,6 +90,7 @@ class _Cell extends StatelessWidget {
     required this.recognizers,
     this.baseStyle,
     this.onLinkTap,
+    this.latex = false,
   });
 
   final String text;
@@ -93,6 +98,7 @@ class _Cell extends StatelessWidget {
   final TextStyle? baseStyle;
   final List<GestureRecognizer> recognizers;
   final void Function(Uri uri)? onLinkTap;
+  final bool latex;
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +108,7 @@ class _Cell extends StatelessWidget {
       baseStyle: baseStyle,
       onLinkTap: onLinkTap,
       recognizers: recognizers,
+      latex: latex,
     );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
