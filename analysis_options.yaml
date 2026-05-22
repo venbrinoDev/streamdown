@@ -21,4 +21,4 @@ linter:
     use_super_parameters: true
     require_trailing_commas: true
     unawaited_futures: true
-    # public_member_api_docs: true  # enable in Phase 8 before publish
+    # public_member_api_docs is enforced manually on the exported API.

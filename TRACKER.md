@@ -4,7 +4,7 @@ Living document. Update at the end of every working session.
 
 **Source of truth for:** What's done, what's in flight, what's blocked, current velocity.
 
-**Last updated:** 2026-05-22 (Phase 8 complete)
+**Last updated:** 2026-05-22 (Phase 9 ready — package is publish-ready)
 
 ---
 
@@ -12,16 +12,17 @@ Living document. Update at the end of every working session.
 
 | Metric | Value |
 |---|---|
-| Current phase | Phase 9 — Publish & Launch (next) |
-| Phase progress | Phases 0–8: all ✅ |
+| Current phase | Phase 9 — Publish & Launch (waiting on user actions) |
+| Phase progress | Phases 0–8: all ✅ · Phase 9: code-side done |
 | Days elapsed | 5 |
-| Days remaining (est.) | 1 |
+| Days remaining (est.) | 0 — ready to ship |
 | Target ship date | 2026-06-01 |
-| 🔴 features done | ~62 / 62 (100%) |
+| 🔴 features done | 62 / 62 (100%) |
 | Test coverage | 224 tests passing |
 | Headline benchmark | **188× faster than naive re-parse** (5KB, 4-char chunks) |
-| Open blockers | 0 (manual: GIF recording, README polish, pub.dev publish) |
-| Commits | 10 |
+| **pub.dev score** | **160 / 160** (verified locally with pana) |
+| Open blockers | None code-side. User: record GIF, run `dart pub publish`, launch posts |
+| Commits | 11 |
 
 ---
 
@@ -38,7 +39,7 @@ Living document. Update at the end of every working session.
 | 6 | Polish & Optional | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 8 / 8 | — |
 | 7 | Example App + Demo | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 10 / 10* | * GIF recording is manual |
 | 8 | Testing & Perf | 🟢 Done | 2026-05-22 | 2026-05-22 | 0.5 | 6 / 8† | † golden tests deferred to v0.2 |
-| 9 | Publish & Launch | ⚪ Not started (ready) | — | — | — | 0 / 12 | — |
+| 9 | Publish & Launch | 🟢 Code-side done | 2026-05-22 | 2026-05-22 | 0.3 | 5 / 12‡ | ‡ 7 user actions remaining (see PUBLISH.md) |
 | 10 | Post-launch | ⚪ Not started | — | — | — | 0 / 5 | Phase 9 |
 
 **Legend:** ⚪ Not started · 🟡 In progress · 🟢 Done · 🔴 Blocked · ⚫ Skipped
