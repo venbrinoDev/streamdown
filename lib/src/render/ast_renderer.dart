@@ -13,6 +13,7 @@ import '../parser/ast.dart';
 import 'code_block.dart';
 import 'inline_spans.dart';
 import 'syntax_theme.dart';
+import 'table.dart' as table_widget;
 
 /// Walks a [DocumentNode] and emits a [Column] of block widgets. Stateful
 /// so it can own the [GestureRecognizer]s created for link taps (and dispose
@@ -112,9 +113,12 @@ class _AstRendererState extends State<AstRenderer> {
           syntaxTheme: widget.syntaxTheme,
           builder: widget.codeBlockBuilder,
         ),
-      TableNode() => _Table(
+      TableNode() => table_widget.TableWidget(
           key: ValueKey<int>(node.id),
           node: node,
+          baseStyle: widget.textStyle,
+          recognizers: _recognizers,
+          onLinkTap: widget.onLinkTap,
         ),
       DocumentNode() ||
       ListItemNode() =>
@@ -350,45 +354,3 @@ class _ListItem extends StatelessWidget {
   }
 }
 
-class _Table extends StatelessWidget {
-  const _Table({super.key, required this.node});
-
-  final TableNode node;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final borderColor = theme.colorScheme.outlineVariant;
-    return Table(
-      defaultColumnWidth: const IntrinsicColumnWidth(),
-      border: TableBorder.all(color: borderColor, width: 1),
-      children: <TableRow>[
-        TableRow(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-          ),
-          children: <Widget>[
-            for (final h in node.headers)
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Text(
-                  h,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-          ],
-        ),
-        for (final row in node.rows)
-          TableRow(
-            children: <Widget>[
-              for (var i = 0; i < node.headers.length; i++)
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Text(i < row.length ? row[i] : ''),
-                ),
-            ],
-          ),
-      ],
-    );
-  }
-}

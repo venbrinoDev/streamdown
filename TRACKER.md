@@ -4,7 +4,7 @@ Living document. Update at the end of every working session.
 
 **Source of truth for:** What's done, what's in flight, what's blocked, current velocity.
 
-**Last updated:** 2026-05-22 (Phase 4 complete)
+**Last updated:** 2026-05-22 (Phase 5 complete)
 
 ---
 
@@ -12,16 +12,16 @@ Living document. Update at the end of every working session.
 
 | Metric | Value |
 |---|---|
-| Current phase | Phase 5 — Tables (next) |
-| Phase progress | Phases 0–4: all ✅ |
-| Days elapsed | 3 |
-| Days remaining (est.) | 6 |
+| Current phase | Phase 6 — Polish & Optional (next) |
+| Phase progress | Phases 0–5: all ✅ |
+| Days elapsed | 4 |
+| Days remaining (est.) | 5 |
 | Target ship date | 2026-06-01 |
-| 🔴 features done | ~47 / 62 (75%) |
+| 🔴 features done | ~53 / 62 (85%) |
 | 🔴 features in progress | 0 |
-| Test coverage | 199 tests passing |
+| Test coverage | 207 tests passing |
 | Open blockers | 0 |
-| Commits | 6 (origin/main at GitHub) |
+| Commits | 7 (origin/main at GitHub) |
 
 ---
 
@@ -34,8 +34,8 @@ Living document. Update at the end of every working session.
 | 2 | Parser & AST | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 6 / 6 | — |
 | 3 | Renderer Core | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.5 | 8 / 8 | — |
 | 4 | Code Blocks | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 10 / 10 | — |
-| 5 | Tables | ⚪ Not started (ready) | — | — | — | 0 / 6 | — |
-| 6 | Polish & Optional | ⚪ Not started | — | — | — | 0 / 8 | Phase 5 |
+| 5 | Tables | 🟢 Done | 2026-05-22 | 2026-05-22 | 0.5 | 6 / 6 | — |
+| 6 | Polish & Optional | ⚪ Not started (ready) | — | — | — | 0 / 8 | — |
 | 7 | Example App + Demo | ⚪ Not started | — | — | — | 0 / 10 | Phase 6 |
 | 8 | Testing & Perf | ⚪ Not started | — | — | — | 0 / 8 | Phase 6 |
 | 9 | Publish & Launch | ⚪ Not started | — | — | — | 0 / 12 | Phase 7+8 |
@@ -86,7 +86,7 @@ Living document. Update at the end of every working session.
 | Block-level Markdown | 13 | 8 | 0 | 0 |
 | Inline Markdown | 12 | 8 | 0 | 0 |
 | Code Blocks | 11 | 8 | 0 | 0 |
-| Tables | 6 | 0 | 0 | 0 |
+| Tables | 6 | 5 | 0 | 0 |
 | Math / LaTeX | 4 | 0 | 0 | 0 |
 | Customization | 9 | 6 | 0 | 0 |
 | Performance | 5 | 0 | 0 | 0 |
@@ -94,7 +94,7 @@ Living document. Update at the end of every working session.
 | Quality / Testing | 8 | 3 | 0 | 0 |
 | Distribution | 6 | 1 | 0 | 0 |
 | Launch / Viral | 7 | 0 | 0 | 0 |
-| **Total** | **88** | **48** | **0** | **0** |
+| **Total** | **88** | **53** | **0** | **0** |
 
 ---
 
@@ -120,6 +120,7 @@ Record any non-obvious decision here so future-you (or future-Claude) doesn't re
 | 2026-05-22 | Block widget keys are `ValueKey(node.id)` derived from the parser's monotonic IDs | Closed nodes never get reassigned IDs, so Flutter's element diff preserves the same widget instances across stream feeds — no flicker, no rebuild |
 | 2026-05-22 | `flutter_highlight`'s `HighlightView` re-parses on every rebuild; we accept this for v0.1 because widget keys mean only the OPEN block re-parses during streaming | Per-line span caching is a Phase 8 optimization. For typical AI responses (~50 lines per code block, ~5ms per parse), the closed-block stability of the widget tree keeps real-world cost bounded |
 | 2026-05-22 | Fall back to plain `Text` (no highlighting) when fence has no info string | `HighlightView` throws `ArgumentError` on null language; plain Text avoids a crash and preserves the user's content intent (no language → no guesswork) |
+| 2026-05-22 | Table columns use `IntrinsicColumnWidth` (grows but never shrinks) — accepting some width-growth during stream rather than computing & caching max widths | Width-growth is monotonic on streams (rows only get added, never removed), so columns only widen — no visible shrink-and-grow jitter. Caching max widths would add bookkeeping for marginal stability gain |
 
 ---
 
@@ -142,6 +143,7 @@ Record any non-obvious decision here so future-you (or future-Claude) doesn't re
 | 2026-05-22 | 2 | 1.0 | Phase 2 complete: AstNode sealed hierarchy (9 node types with monotonic IDs), Parser (token → AST with trailing-path-only mutation, table promotion via separator lookahead, list/blockquote state). 166 tests passing — snapshot tests for every block type + chunked-vs-whole AST equivalence across 10 samples × 3 chunk sizes + ID monotonicity + immutability of closed nodes. `complete()` preserves unclosed code blocks as OPEN signal. |
 | 2026-05-22 | 3 | 1.5 | Phase 3 complete: public `Streamdown` widget (stream + .text() constructors), `AstRenderer` (StatefulWidget owning GestureRecognizer lifecycle), inline span builder with stack-based strong/em/strike pairing, block widgets for headings/paragraphs/blockquotes/HR/lists/code/tables. 187 tests passing — every block type rendered + inline formatting + link tap recognizer + SelectionArea + element-persistence across chunk feeds (no key churn). Code blocks render plainly; Phase 4 will add syntax highlighting. Tables render basic GFM; Phase 5 will add alignment + provisional rows. |
 | 2026-05-22 | 4 | 1.0 | Phase 4 complete: `SyntaxTheme` (light/dark/auto), `CodeBlockWidget` (HighlightView under the hood, language label, top-right copy-to-clipboard button with 2s cooldown, horizontal scroll for long lines), `codeBlockBuilder` full-override hook on Streamdown. Fallback to plain Text when language is null (HighlightView crashes on null lang). 199 tests passing — including custom-builder invocation, clipboard mock verification, dark/light theme rendering, and code-block element persistence across multiple chunk feeds. |
+| 2026-05-22 | 5 | 0.5 | Phase 5 complete: dedicated `TableWidget` extracted to `lib/src/render/table.dart`. Cell alignment from GFM `:--`/`:--:`/`--:` markers applied via TextAlign on cell Text.rich. Inline markdown supported inside cells (bold/italic/strike/code/link/autolink) via `buildInlineSpans`. Header row gets bold styling + theme `surfaceContainerHighest` background. Wide tables wrap in horizontal SingleChildScrollView. 207 tests passing — alignment verification, inline-in-cells (bold/code/link tap), horizontal scroll, and table element persistence across row-append chunks. |
 
 ---
 
