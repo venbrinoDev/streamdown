@@ -4,7 +4,7 @@ Living document. Update at the end of every working session.
 
 **Source of truth for:** What's done, what's in flight, what's blocked, current velocity.
 
-**Last updated:** 2026-05-22 (Phase 2 complete)
+**Last updated:** 2026-05-22 (Phase 3 complete)
 
 ---
 
@@ -12,16 +12,16 @@ Living document. Update at the end of every working session.
 
 | Metric | Value |
 |---|---|
-| Current phase | Phase 3 — Renderer Core (next) |
-| Phase progress | Phases 0–2: all ✅ |
-| Days elapsed | 2 |
-| Days remaining (est.) | 7 |
+| Current phase | Phase 4 — Code Blocks (next) |
+| Phase progress | Phases 0–3: all ✅ |
+| Days elapsed | 3 |
+| Days remaining (est.) | 6 |
 | Target ship date | 2026-06-01 |
-| 🔴 features done | 11 / 62 (+F-CORE-04, F-STREAM-02, F-STREAM-03, F-TEST-02, F-TEST-04) |
+| 🔴 features done | ~26 / 62 |
 | 🔴 features in progress | 0 |
-| Test coverage | 166 tests passing (tokenizer + inline tokenizer + parser) |
+| Test coverage | 187 tests passing (tokenizer + parser + widgets) |
 | Open blockers | 0 |
-| Commits | 4 (origin/main at GitHub) |
+| Commits | 5 (origin/main at GitHub) |
 
 ---
 
@@ -32,8 +32,8 @@ Living document. Update at the end of every working session.
 | 0 | Foundation | 🟢 Done | 2026-05-22 | 2026-05-22 | 0.5 | 13 / 13 | — |
 | 1 | Tokenizer | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 8 / 8 | — |
 | 2 | Parser & AST | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 6 / 6 | — |
-| 3 | Renderer Core | ⚪ Not started (ready) | — | — | — | 0 / 8 | — |
-| 4 | Code Blocks | ⚪ Not started | — | — | — | 0 / 10 | Phase 3 |
+| 3 | Renderer Core | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.5 | 8 / 8 | — |
+| 4 | Code Blocks | ⚪ Not started (ready) | — | — | — | 0 / 10 | — |
 | 5 | Tables | ⚪ Not started | — | — | — | 0 / 6 | Phase 3 |
 | 6 | Polish & Optional | ⚪ Not started | — | — | — | 0 / 8 | Phase 5 |
 | 7 | Example App + Demo | ⚪ Not started | — | — | — | 0 / 10 | Phase 6 |
@@ -81,20 +81,20 @@ Living document. Update at the end of every working session.
 
 | Category | Total | Done | In progress | Blocked |
 |---|---|---|---|---|
-| Core Rendering | 7 | 1 | 0 | 0 |
+| Core Rendering | 7 | 7 | 0 | 0 |
 | Streaming Engine | 8 | 4 | 0 | 0 |
-| Block-level Markdown | 13 | 0 | 0 | 0 |
-| Inline Markdown | 12 | 0 | 0 | 0 |
+| Block-level Markdown | 13 | 8 | 0 | 0 |
+| Inline Markdown | 12 | 8 | 0 | 0 |
 | Code Blocks | 11 | 0 | 0 | 0 |
 | Tables | 6 | 0 | 0 | 0 |
 | Math / LaTeX | 4 | 0 | 0 | 0 |
-| Customization | 9 | 0 | 0 | 0 |
+| Customization | 9 | 4 | 0 | 0 |
 | Performance | 5 | 0 | 0 | 0 |
 | Developer Experience | 9 | 4 | 0 | 0 |
 | Quality / Testing | 8 | 3 | 0 | 0 |
 | Distribution | 6 | 1 | 0 | 0 |
 | Launch / Viral | 7 | 0 | 0 | 0 |
-| **Total** | **88** | **11** | **0** | **0** |
+| **Total** | **88** | **38** | **0** | **0** |
 
 ---
 
@@ -114,6 +114,10 @@ Record any non-obvious decision here so future-you (or future-Claude) doesn't re
 | 2026-05-22 | v0.1 ships single-level blockquotes only (nested `>>` flattened to depth=1 in AST) | Real-world AI markdown rarely nests blockquotes; tokenizer captures depth so nested support can be added in v0.2 without breaking changes |
 | 2026-05-22 | Lists close on any blank line (no CommonMark loose-list distinction) | Predictable behavior, easy to mentally model; AI markdown uses blank lines liberally between blocks |
 | 2026-05-22 | `parser.complete()` finalizes paragraphs/lists/tables/quotes but leaves unclosed code blocks `isComplete: false` | The OPEN state is a useful signal to the renderer that the stream ended mid-block (network error, mid-token) — distinct from "stream ended at a natural boundary" |
+| 2026-05-22 | Stack-based strong/em/strike pairing (counter toggle) instead of CommonMark's "process emphasis" algorithm | Pathological cases like `*foo**bar*baz**` aren't spec-compliant, but real-world AI markdown always nests delimiters well; the simpler algorithm is ~30 LOC vs ~150 for full spec; spec compliance is a v0.2 upgrade |
+| 2026-05-22 | `SelectionArea` (Flutter 3.7+) at top level instead of `SelectableText.rich` per paragraph | One SelectionArea selects across blocks naturally; no per-element wrapping; cleaner widget tree; works with Text.rich children automatically |
+| 2026-05-22 | `AstRenderer` is a `StatefulWidget` so it can own and dispose `GestureRecognizer`s created for link taps | TapGestureRecognizers attached to TextSpans leak if not disposed; central ownership in renderer state is the simplest correct lifecycle |
+| 2026-05-22 | Block widget keys are `ValueKey(node.id)` derived from the parser's monotonic IDs | Closed nodes never get reassigned IDs, so Flutter's element diff preserves the same widget instances across stream feeds — no flicker, no rebuild |
 
 ---
 
@@ -134,6 +138,7 @@ Record any non-obvious decision here so future-you (or future-Claude) doesn't re
 | 2026-05-22 | 0 | 1.5 | Phase 0 complete: scaffold + 4 planning docs + deps + lints + folder structure + first commit. Analyze clean, test green. |
 | 2026-05-22 | 1 | 1.0 | Phase 1 complete: Token sealed hierarchy (16 token types), incremental block Tokenizer (line-based state machine, fence-aware), InlineTokenizer (delimiters + code spans + links/images + autolinks + hard breaks). 101 tests passing — chunked-vs-whole equivalence verified across 10 samples × 3 chunk sizes + append-only invariant + perf benchmark. |
 | 2026-05-22 | 2 | 1.0 | Phase 2 complete: AstNode sealed hierarchy (9 node types with monotonic IDs), Parser (token → AST with trailing-path-only mutation, table promotion via separator lookahead, list/blockquote state). 166 tests passing — snapshot tests for every block type + chunked-vs-whole AST equivalence across 10 samples × 3 chunk sizes + ID monotonicity + immutability of closed nodes. `complete()` preserves unclosed code blocks as OPEN signal. |
+| 2026-05-22 | 3 | 1.5 | Phase 3 complete: public `Streamdown` widget (stream + .text() constructors), `AstRenderer` (StatefulWidget owning GestureRecognizer lifecycle), inline span builder with stack-based strong/em/strike pairing, block widgets for headings/paragraphs/blockquotes/HR/lists/code/tables. 187 tests passing — every block type rendered + inline formatting + link tap recognizer + SelectionArea + element-persistence across chunk feeds (no key churn). Code blocks render plainly; Phase 4 will add syntax highlighting. Tables render basic GFM; Phase 5 will add alignment + provisional rows. |
 
 ---
 

@@ -6,3 +6,5 @@
 ///
 /// See https://pub.dev/packages/streamdown for documentation.
 library;
+
+export 'src/render/streamdown_widget.dart' show Streamdown;
