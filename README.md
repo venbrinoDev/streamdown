@@ -102,7 +102,7 @@ See [`TRACKER.md`](TRACKER.md) for live status.
 
 ## Contributing
 
-Issues and PRs welcome. See [GitHub Issues](https://github.com/jayu/streamdown/issues).
+Issues and PRs welcome. See [GitHub Issues](https://github.com/jayu1023/streamdown/issues).
 
 ## License
 
