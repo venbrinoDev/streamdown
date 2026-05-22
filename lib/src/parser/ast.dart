@@ -134,11 +134,7 @@ final class ListItemNode extends AstNode {
 
 /// A GFM table. Header row + alignments + body rows.
 final class TableNode extends AstNode {
-  TableNode(
-    super.id, {
-    required this.headers,
-    required this.alignments,
-  });
+  TableNode(super.id, {required this.headers, required this.alignments});
 
   final List<String> headers;
   final List<TableAlignment> alignments;

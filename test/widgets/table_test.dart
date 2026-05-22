@@ -6,8 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:streamdown/streamdown.dart';
 
-Future<void> pumpStatic(WidgetTester tester, String md,
-    {void Function(Uri uri)? onLinkTap}) async {
+Future<void> pumpStatic(
+  WidgetTester tester,
+  String md, {
+  void Function(Uri uri)? onLinkTap,
+}) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(body: Streamdown.text(md, onLinkTap: onLinkTap)),
@@ -31,8 +34,7 @@ TextAlign? findTextAlignOf(WidgetTester tester, String needle) {
 void main() {
   group('Streamdown — table cell alignment', () {
     testWidgets('left / center / right alignments are applied', (tester) async {
-      const md =
-          '| L | C | R |\n|:--|:--:|--:|\n| left | center | right |\n';
+      const md = '| L | C | R |\n|:--|:--:|--:|\n| left | center | right |\n';
       await pumpStatic(tester, md);
 
       expect(find.byType(Table), findsOneWidget);
@@ -49,8 +51,9 @@ void main() {
   });
 
   group('Streamdown — inline markdown in cells', () {
-    testWidgets('bold delimiters are stripped and the text remains',
-        (tester) async {
+    testWidgets('bold delimiters are stripped and the text remains', (
+      tester,
+    ) async {
       const md = '| col |\n|-----|\n| **bold cell** |\n';
       await pumpStatic(tester, md);
 
@@ -93,8 +96,9 @@ void main() {
       expect(tapped, Uri.parse('https://example.com/docs'));
     });
 
-    testWidgets('inline code in a cell renders code span content',
-        (tester) async {
+    testWidgets('inline code in a cell renders code span content', (
+      tester,
+    ) async {
       const md = '| col |\n|-----|\n| use `printf` to log |\n';
       await pumpStatic(tester, md);
 
@@ -109,8 +113,9 @@ void main() {
   });
 
   group('Streamdown — table horizontal scroll', () {
-    testWidgets('wide table is wrapped in a SingleChildScrollView',
-        (tester) async {
+    testWidgets('wide table is wrapped in a SingleChildScrollView', (
+      tester,
+    ) async {
       const md = '| a | b | c |\n|---|---|---|\n| 1 | 2 | 3 |\n';
       await pumpStatic(tester, md);
 

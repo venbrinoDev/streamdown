@@ -39,8 +39,8 @@ class Streamdown extends StatefulWidget {
     this.codeBlockBuilder,
     this.latex = false,
     this.errorBuilder,
-  })  : _stream = stream,
-        _text = null;
+  }) : _stream = stream,
+       _text = null;
 
   /// Static constructor — render a complete markdown string. Uses the same
   /// incremental parser internally.
@@ -55,8 +55,8 @@ class Streamdown extends StatefulWidget {
     this.codeBlockBuilder,
     this.latex = false,
     this.errorBuilder,
-  })  : _stream = null,
-        _text = text;
+  }) : _stream = null,
+       _text = text;
 
   final Stream<String>? _stream;
   final String? _text;
@@ -95,7 +95,8 @@ class Streamdown extends StatefulWidget {
     BuildContext context,
     Object error,
     StackTrace? stackTrace,
-  )? errorBuilder;
+  )?
+  errorBuilder;
 
   @override
   State<Streamdown> createState() => _StreamdownState();

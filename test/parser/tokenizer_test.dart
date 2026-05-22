@@ -78,7 +78,9 @@ void main() {
     });
 
     test('paragraph text', () {
-      expect(tokenizeAll('Hello world\n'), const [TextLineToken('Hello world')]);
+      expect(tokenizeAll('Hello world\n'), const [
+        TextLineToken('Hello world'),
+      ]);
     });
 
     test('multi-line paragraph keeps each line separate', () {
@@ -178,11 +180,7 @@ void main() {
       expect(tokens.length, 1);
       expect(
         tokens.first,
-        const FenceOpenToken(
-          fenceChar: '`',
-          fenceLength: 3,
-          language: 'dart',
-        ),
+        const FenceOpenToken(fenceChar: '`', fenceLength: 3, language: 'dart'),
       );
     });
 
@@ -196,11 +194,7 @@ void main() {
     test('fence with longer than 3 backticks', () {
       expect(
         tokenizeAll('````dart\n').first,
-        const FenceOpenToken(
-          fenceChar: '`',
-          fenceLength: 4,
-          language: 'dart',
-        ),
+        const FenceOpenToken(fenceChar: '`', fenceLength: 4, language: 'dart'),
       );
     });
 
@@ -277,7 +271,10 @@ void main() {
 
     test('table cells with escaped pipe', () {
       expect(
-        tokenizeAll(r'| a \| b | c |' '\n').first,
+        tokenizeAll(
+          r'| a \| b | c |'
+          '\n',
+        ).first,
         const TableRowToken(['a | b', 'c']),
       );
     });
@@ -350,14 +347,17 @@ void main() {
   });
 
   group('Tokenizer — append-only invariant', () {
-    test('feeding more does not retroactively change already-emitted tokens', () {
-      final t = Tokenizer();
-      final first = t.feed('# Heading\nSome text\n');
-      expect(first.length, 2);
-      final snapshot = List<Token>.from(first);
-      t.feed('\n```dart\ncode\n```\n');
-      expect(first, equals(snapshot));
-    });
+    test(
+      'feeding more does not retroactively change already-emitted tokens',
+      () {
+        final t = Tokenizer();
+        final first = t.feed('# Heading\nSome text\n');
+        expect(first.length, 2);
+        final snapshot = List<Token>.from(first);
+        t.feed('\n```dart\ncode\n```\n');
+        expect(first, equals(snapshot));
+      },
+    );
 
     test('linear performance on large input — no quadratic blowup', () {
       // Build a 10k-line markdown doc and feed it character by character.
@@ -379,10 +379,13 @@ void main() {
       stopwatch.stop();
 
       expect(tokens.length, 10000);
-      expect(stopwatch.elapsedMilliseconds, lessThan(5000),
-          reason:
-              'Char-by-char tokenization of 10k lines took ${stopwatch.elapsedMilliseconds}ms — '
-              'suspect quadratic behavior.');
+      expect(
+        stopwatch.elapsedMilliseconds,
+        lessThan(5000),
+        reason:
+            'Char-by-char tokenization of 10k lines took ${stopwatch.elapsedMilliseconds}ms — '
+            'suspect quadratic behavior.',
+      );
     });
   });
 }

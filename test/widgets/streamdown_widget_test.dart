@@ -34,10 +34,7 @@ void main() {
     });
 
     testWidgets('renders all 6 heading levels', (tester) async {
-      await pumpStatic(
-        tester,
-        '# A\n## B\n### C\n#### D\n##### E\n###### F\n',
-      );
+      await pumpStatic(tester, '# A\n## B\n### C\n#### D\n##### E\n###### F\n');
       expect(find.text('A'), findsOneWidget);
       expect(find.text('B'), findsOneWidget);
       expect(find.text('C'), findsOneWidget);
@@ -70,8 +67,9 @@ void main() {
       expect(find.text('•'), findsNWidgets(3));
     });
 
-    testWidgets('renders an ordered list with numbered markers',
-        (tester) async {
+    testWidgets('renders an ordered list with numbered markers', (
+      tester,
+    ) async {
       await pumpStatic(tester, '1. first\n2. second\n');
       expect(find.text('1.'), findsOneWidget);
       expect(find.text('2.'), findsOneWidget);
@@ -92,10 +90,7 @@ void main() {
     });
 
     testWidgets('renders a GFM table', (tester) async {
-      await pumpStatic(
-        tester,
-        '| h1 | h2 |\n|----|----|\n| a  | b  |\n',
-      );
+      await pumpStatic(tester, '| h1 | h2 |\n|----|----|\n| a  | b  |\n');
       expect(find.text('h1'), findsOneWidget);
       expect(find.text('h2'), findsOneWidget);
       expect(find.text('a'), findsOneWidget);
@@ -173,8 +168,9 @@ void main() {
   });
 
   group('Streamdown — selection', () {
-    testWidgets('SelectionArea wraps content when selectable=true',
-        (tester) async {
+    testWidgets('SelectionArea wraps content when selectable=true', (
+      tester,
+    ) async {
       await pumpStatic(tester, 'paragraph\n');
       expect(find.byType(SelectionArea), findsOneWidget);
     });

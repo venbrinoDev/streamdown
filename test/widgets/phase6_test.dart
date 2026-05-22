@@ -10,7 +10,9 @@ import 'package:streamdown/streamdown.dart';
 void main() {
   group('Phase 6 — bare URL autolinking', () {
     test('bare https URL emits AutolinkToken', () {
-      final tokens = InlineTokenizer.tokenize('visit https://example.com today');
+      final tokens = InlineTokenizer.tokenize(
+        'visit https://example.com today',
+      );
       final autolinks = tokens.whereType<AutolinkToken>().toList();
       expect(autolinks, hasLength(1));
       expect(autolinks.first.url, 'https://example.com');
@@ -22,8 +24,9 @@ void main() {
     });
 
     test('trailing period is stripped', () {
-      final tokens =
-          InlineTokenizer.tokenize('See https://example.com. Then continue.');
+      final tokens = InlineTokenizer.tokenize(
+        'See https://example.com. Then continue.',
+      );
       expect(
         tokens.whereType<AutolinkToken>().single.url,
         'https://example.com',
@@ -49,9 +52,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: Streamdown.text(
-              '![alt text](https://example.com/img.png)\n',
-            ),
+            body: Streamdown.text('![alt text](https://example.com/img.png)\n'),
           ),
         ),
       );
@@ -69,10 +70,7 @@ void main() {
       // Wait for the network image to fail (in widget tests it errors out).
       await tester.pumpAndSettle(const Duration(seconds: 1));
       // Either the placeholder text or the alt-fallback should appear.
-      expect(
-        find.textContaining('the alt', findRichText: true),
-        findsWidgets,
-      );
+      expect(find.textContaining('the alt', findRichText: true), findsWidgets);
     });
   });
 
@@ -112,8 +110,9 @@ void main() {
       expect(capturedError, 'boom');
     });
 
-    testWidgets('without errorBuilder, errors are silently swallowed',
-        (tester) async {
+    testWidgets('without errorBuilder, errors are silently swallowed', (
+      tester,
+    ) async {
       final controller = StreamController<String>();
       addTearDown(() {
         if (!controller.isClosed) controller.close();

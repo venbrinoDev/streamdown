@@ -95,8 +95,7 @@ final class ListMarkerToken extends Token {
           other.isChecked == isChecked;
 
   @override
-  int get hashCode =>
-      Object.hash(indent, ordered, number, isTask, isChecked);
+  int get hashCode => Object.hash(indent, ordered, number, isTask, isChecked);
 
   @override
   String toString() =>
@@ -223,8 +222,7 @@ final class TextLineToken extends Token {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is TextLineToken && other.text == text;
+      identical(this, other) || other is TextLineToken && other.text == text;
 
   @override
   int get hashCode => Object.hash('text', text);
@@ -260,8 +258,7 @@ final class InlineTextToken extends Token {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is InlineTextToken && other.text == text;
+      identical(this, other) || other is InlineTextToken && other.text == text;
 
   @override
   int get hashCode => Object.hash('inline', text);
@@ -376,8 +373,7 @@ final class AutolinkToken extends Token {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is AutolinkToken && other.url == url;
+      identical(this, other) || other is AutolinkToken && other.url == url;
 
   @override
   int get hashCode => Object.hash('autolink', url);

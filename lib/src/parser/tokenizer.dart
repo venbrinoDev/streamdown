@@ -114,11 +114,13 @@ class Tokenizer {
       _fenceChar = fence[0];
       _fenceLength = fence.length;
       _fenceIndent = indent;
-      out.add(FenceOpenToken(
-        fenceChar: _fenceChar,
-        fenceLength: _fenceLength,
-        language: (info == null || info.isEmpty) ? null : info,
-      ));
+      out.add(
+        FenceOpenToken(
+          fenceChar: _fenceChar,
+          fenceLength: _fenceLength,
+          language: (info == null || info.isEmpty) ? null : info,
+        ),
+      );
       return;
     }
 
@@ -209,13 +211,15 @@ class Tokenizer {
       content = rest.substring(taskMatch.end);
     }
 
-    out.add(ListMarkerToken(
-      indent: indent,
-      ordered: ordered,
-      number: number,
-      isTask: isTask,
-      isChecked: isChecked,
-    ));
+    out.add(
+      ListMarkerToken(
+        indent: indent,
+        ordered: ordered,
+        number: number,
+        isTask: isTask,
+        isChecked: isChecked,
+      ),
+    );
 
     // Treat the marker's content as the start of a paragraph text line.
     if (content.isNotEmpty) {
@@ -269,15 +273,18 @@ class Tokenizer {
     var s = line.trim();
     if (s.startsWith('|')) s = s.substring(1);
     if (s.endsWith('|')) s = s.substring(0, s.length - 1);
-    return s.split('|').map((c) {
-      final t = c.trim();
-      final left = t.startsWith(':');
-      final right = t.endsWith(':');
-      if (left && right) return TableAlignment.center;
-      if (right) return TableAlignment.right;
-      if (left) return TableAlignment.left;
-      return TableAlignment.none;
-    }).toList(growable: false);
+    return s
+        .split('|')
+        .map((c) {
+          final t = c.trim();
+          final left = t.startsWith(':');
+          final right = t.endsWith(':');
+          if (left && right) return TableAlignment.center;
+          if (right) return TableAlignment.right;
+          if (left) return TableAlignment.left;
+          return TableAlignment.none;
+        })
+        .toList(growable: false);
   }
 
   bool _looksLikeTableRow(String line) {

@@ -51,8 +51,9 @@ class TableWidget extends StatelessWidget {
                   text: node.headers[i],
                   alignment: _safeAlignment(i),
                   recognizers: recognizers,
-                  baseStyle: (baseStyle ?? const TextStyle())
-                      .copyWith(fontWeight: FontWeight.bold),
+                  baseStyle: (baseStyle ?? const TextStyle()).copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                   onLinkTap: onLinkTap,
                   latex: latex,
                 ),
@@ -77,10 +78,9 @@ class TableWidget extends StatelessWidget {
     );
   }
 
-  TableAlignment _safeAlignment(int column) =>
-      column < node.alignments.length
-          ? node.alignments[column]
-          : TableAlignment.none;
+  TableAlignment _safeAlignment(int column) => column < node.alignments.length
+      ? node.alignments[column]
+      : TableAlignment.none;
 }
 
 class _Cell extends StatelessWidget {
@@ -120,9 +120,9 @@ class _Cell extends StatelessWidget {
   }
 
   TextAlign _textAlign(TableAlignment a) => switch (a) {
-        TableAlignment.left => TextAlign.left,
-        TableAlignment.center => TextAlign.center,
-        TableAlignment.right => TextAlign.right,
-        TableAlignment.none => TextAlign.start,
-      };
+    TableAlignment.left => TextAlign.left,
+    TableAlignment.center => TextAlign.center,
+    TableAlignment.right => TextAlign.right,
+    TableAlignment.none => TextAlign.start,
+  };
 }

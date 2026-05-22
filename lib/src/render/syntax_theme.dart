@@ -27,8 +27,8 @@ class SyntaxTheme {
   /// Picks light/dark based on `Theme.of(context).brightness`.
   factory SyntaxTheme.auto(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
-          ? SyntaxTheme.atomOneDark()
-          : SyntaxTheme.githubLight();
+      ? SyntaxTheme.atomOneDark()
+      : SyntaxTheme.githubLight();
 
   /// Highlight.js class → text style. Keys: `keyword`, `string`, `comment`, etc.
   ///
@@ -58,9 +58,10 @@ class SyntaxTheme {
 /// Signature for a custom code-block renderer. Provide one via the
 /// [Streamdown] widget's `codeBlockBuilder` parameter to fully replace the
 /// default rendering (line numbers, custom themes, etc.).
-typedef CodeBlockBuilder = Widget Function(
-  BuildContext context,
-  String? language,
-  String code,
-  bool isComplete,
-);
+typedef CodeBlockBuilder =
+    Widget Function(
+      BuildContext context,
+      String? language,
+      String code,
+      bool isComplete,
+    );

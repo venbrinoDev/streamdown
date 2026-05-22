@@ -73,7 +73,12 @@ String snapshot(AstNode node, {int depth = 0}) {
         sb.write(snapshot(i, depth: depth + 1));
       }
 
-    case ListItemNode(:final isTask, :final isChecked, :final children, :final isComplete):
+    case ListItemNode(
+      :final isTask,
+      :final isChecked,
+      :final children,
+      :final isComplete,
+    ):
       final task = isTask ? '[${isChecked ? "x" : " "}]' : '';
       sb.write('${indent}Item$task(${children.length})');
       if (!isComplete) sb.write(' OPEN');
@@ -82,7 +87,12 @@ String snapshot(AstNode node, {int depth = 0}) {
         sb.write(snapshot(c, depth: depth + 1));
       }
 
-    case TableNode(:final headers, :final alignments, :final rows, :final isComplete):
+    case TableNode(
+      :final headers,
+      :final alignments,
+      :final rows,
+      :final isComplete,
+    ):
       sb.write('${indent}Table(h=${headers.length}, ${rows.length}R)');
       if (!isComplete) sb.write(' OPEN');
       sb.write('\n$indent  H: $headers');
@@ -114,8 +124,10 @@ void main() {
 
     test('all 6 heading levels', () {
       const md = '# A\n## B\n### C\n#### D\n##### E\n###### F\n';
-      expect(snapshot(parseAll(md)),
-          'Doc(6)\n  H1("A")\n  H2("B")\n  H3("C")\n  H4("D")\n  H5("E")\n  H6("F")');
+      expect(
+        snapshot(parseAll(md)),
+        'Doc(6)\n  H1("A")\n  H2("B")\n  H3("C")\n  H4("D")\n  H5("E")\n  H6("F")',
+      );
     });
 
     test('horizontal rule with dashes', () {
@@ -127,8 +139,7 @@ void main() {
     });
 
     test('single-line paragraph', () {
-      expect(snapshot(parseAll('Hello world\n')),
-          'Doc(1)\n  P("Hello world")');
+      expect(snapshot(parseAll('Hello world\n')), 'Doc(1)\n  P("Hello world")');
     });
 
     test('multi-line paragraph joins with newline (soft-break)', () {
@@ -136,52 +147,70 @@ void main() {
     });
 
     test('two paragraphs separated by blank line', () {
-      expect(snapshot(parseAll('first\n\nsecond\n')),
-          'Doc(2)\n  P("first")\n  P("second")');
+      expect(
+        snapshot(parseAll('first\n\nsecond\n')),
+        'Doc(2)\n  P("first")\n  P("second")',
+      );
     });
 
     test('complete fenced code block', () {
       const md = '```dart\nprint(42);\n```\n';
-      expect(snapshot(parseAll(md)),
-          'Doc(1)\n  Code(lang="dart", 1L)\n    > "print(42);"');
+      expect(
+        snapshot(parseAll(md)),
+        'Doc(1)\n  Code(lang="dart", 1L)\n    > "print(42);"',
+      );
     });
 
     test('code block without language', () {
-      expect(snapshot(parseAll('```\nfoo\n```\n')),
-          'Doc(1)\n  Code(lang=null, 1L)\n    > "foo"');
+      expect(
+        snapshot(parseAll('```\nfoo\n```\n')),
+        'Doc(1)\n  Code(lang=null, 1L)\n    > "foo"',
+      );
     });
 
     test('code block multiple lines', () {
       const md = '```\nline1\nline2\nline3\n```\n';
-      expect(snapshot(parseAll(md)),
-          'Doc(1)\n  Code(lang=null, 3L)\n    > "line1"\n    > "line2"\n    > "line3"');
+      expect(
+        snapshot(parseAll(md)),
+        'Doc(1)\n  Code(lang=null, 3L)\n    > "line1"\n    > "line2"\n    > "line3"',
+      );
     });
 
     test('unclosed fenced code block stays OPEN', () {
       const md = '```dart\nprint(1);\n';
-      expect(snapshot(parseAll(md)),
-          'Doc(1)\n  Code(lang="dart", 1L) OPEN\n    > "print(1);"');
+      expect(
+        snapshot(parseAll(md)),
+        'Doc(1)\n  Code(lang="dart", 1L) OPEN\n    > "print(1);"',
+      );
     });
 
     test('blockquote with single paragraph', () {
-      expect(snapshot(parseAll('> hello\n')),
-          'Doc(1)\n  Q(d=1, 1)\n    P("hello")');
+      expect(
+        snapshot(parseAll('> hello\n')),
+        'Doc(1)\n  Q(d=1, 1)\n    P("hello")',
+      );
     });
 
     test('blockquote with two paragraph lines', () {
       // Both > prefixed.
-      expect(snapshot(parseAll('> first\n> second\n')),
-          'Doc(1)\n  Q(d=1, 1)\n    P("first\nsecond")');
+      expect(
+        snapshot(parseAll('> first\n> second\n')),
+        'Doc(1)\n  Q(d=1, 1)\n    P("first\nsecond")',
+      );
     });
 
     test('unordered list with two items', () {
-      expect(snapshot(parseAll('- one\n- two\n')),
-          'Doc(1)\n  List(ul, 2)\n    Item(1)\n      P("one")\n    Item(1)\n      P("two")');
+      expect(
+        snapshot(parseAll('- one\n- two\n')),
+        'Doc(1)\n  List(ul, 2)\n    Item(1)\n      P("one")\n    Item(1)\n      P("two")',
+      );
     });
 
     test('ordered list with start number 42', () {
-      expect(snapshot(parseAll('42. forty-two\n43. forty-three\n')),
-          'Doc(1)\n  List(ol, 2)\n    Item(1)\n      P("forty-two")\n    Item(1)\n      P("forty-three")');
+      expect(
+        snapshot(parseAll('42. forty-two\n43. forty-three\n')),
+        'Doc(1)\n  List(ol, 2)\n    Item(1)\n      P("forty-two")\n    Item(1)\n      P("forty-three")',
+      );
     });
 
     test('task list', () {
@@ -283,8 +312,11 @@ void main() {
       p.feed(tok.feed('\n'));
       expect(p.document.children, hasLength(1));
       final para = p.document.children.first as ParagraphNode;
-      expect(para.isComplete, isFalse,
-          reason: 'paragraph is open until a block boundary');
+      expect(
+        para.isComplete,
+        isFalse,
+        reason: 'paragraph is open until a block boundary',
+      );
       expect(para.text, 'hello world');
 
       // Add a blank line — closes it.
@@ -388,8 +420,12 @@ void main() {
       expect(p.document.children.first.isComplete, isFalse);
       p.feed(tok.complete());
       p.complete();
-      expect(p.document.children.first.isComplete, isFalse,
-          reason: 'unclosed fence stays open even after complete — caller decides');
+      expect(
+        p.document.children.first.isComplete,
+        isFalse,
+        reason:
+            'unclosed fence stays open even after complete — caller decides',
+      );
       expect(p.document.isComplete, isTrue);
     });
   });

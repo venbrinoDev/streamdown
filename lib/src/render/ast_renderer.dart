@@ -74,61 +74,60 @@ class _AstRendererState extends State<AstRenderer> {
   Widget _renderBlock(BuildContext context, AstNode node) {
     return switch (node) {
       HeadingNode() => _Heading(
-          key: ValueKey<int>(node.id),
-          node: node,
-          baseStyle: widget.textStyle,
-          recognizers: _recognizers,
-          onLinkTap: widget.onLinkTap,
-          latex: widget.latex,
-        ),
+        key: ValueKey<int>(node.id),
+        node: node,
+        baseStyle: widget.textStyle,
+        recognizers: _recognizers,
+        onLinkTap: widget.onLinkTap,
+        latex: widget.latex,
+      ),
       ParagraphNode() => _Paragraph(
-          key: ValueKey<int>(node.id),
-          node: node,
-          baseStyle: widget.textStyle,
-          recognizers: _recognizers,
-          onLinkTap: widget.onLinkTap,
-          latex: widget.latex,
-        ),
+        key: ValueKey<int>(node.id),
+        node: node,
+        baseStyle: widget.textStyle,
+        recognizers: _recognizers,
+        onLinkTap: widget.onLinkTap,
+        latex: widget.latex,
+      ),
       HorizontalRuleNode() => Padding(
-          key: ValueKey<int>(node.id),
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Divider(
-            color: Theme.of(context).colorScheme.outlineVariant,
-            height: 1,
-          ),
+        key: ValueKey<int>(node.id),
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Divider(
+          color: Theme.of(context).colorScheme.outlineVariant,
+          height: 1,
         ),
+      ),
       BlockquoteNode() => _Blockquote(
-          key: ValueKey<int>(node.id),
-          node: node,
-          baseStyle: widget.textStyle,
-          recognizers: _recognizers,
-          onLinkTap: widget.onLinkTap,
-          latex: widget.latex,
-        ),
+        key: ValueKey<int>(node.id),
+        node: node,
+        baseStyle: widget.textStyle,
+        recognizers: _recognizers,
+        onLinkTap: widget.onLinkTap,
+        latex: widget.latex,
+      ),
       ListNode() => _List(
-          key: ValueKey<int>(node.id),
-          node: node,
-          baseStyle: widget.textStyle,
-          recognizers: _recognizers,
-          onLinkTap: widget.onLinkTap,
-          latex: widget.latex,
-        ),
+        key: ValueKey<int>(node.id),
+        node: node,
+        baseStyle: widget.textStyle,
+        recognizers: _recognizers,
+        onLinkTap: widget.onLinkTap,
+        latex: widget.latex,
+      ),
       CodeBlockNode() => CodeBlockWidget(
-          key: ValueKey<int>(node.id),
-          node: node,
-          syntaxTheme: widget.syntaxTheme,
-          builder: widget.codeBlockBuilder,
-        ),
+        key: ValueKey<int>(node.id),
+        node: node,
+        syntaxTheme: widget.syntaxTheme,
+        builder: widget.codeBlockBuilder,
+      ),
       TableNode() => table_widget.TableWidget(
-          key: ValueKey<int>(node.id),
-          node: node,
-          baseStyle: widget.textStyle,
-          recognizers: _recognizers,
-          onLinkTap: widget.onLinkTap,
-          latex: widget.latex,
-        ),
-      DocumentNode() ||
-      ListItemNode() =>
+        key: ValueKey<int>(node.id),
+        node: node,
+        baseStyle: widget.textStyle,
+        recognizers: _recognizers,
+        onLinkTap: widget.onLinkTap,
+        latex: widget.latex,
+      ),
+      DocumentNode() || ListItemNode() =>
         // These should never appear at top level.
         const SizedBox.shrink(),
     };
@@ -246,8 +245,7 @@ class _Blockquote extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         spacing: 8,
         children: <Widget>[
-          for (final child in node.children)
-            _renderInner(context, child),
+          for (final child in node.children) _renderInner(context, child),
         ],
       ),
     );
@@ -256,21 +254,21 @@ class _Blockquote extends StatelessWidget {
   Widget _renderInner(BuildContext context, AstNode child) {
     return switch (child) {
       ParagraphNode() => _Paragraph(
-          key: ValueKey<int>(child.id),
-          node: child,
-          baseStyle: baseStyle,
-          recognizers: recognizers,
-          onLinkTap: onLinkTap,
-          latex: latex,
-        ),
+        key: ValueKey<int>(child.id),
+        node: child,
+        baseStyle: baseStyle,
+        recognizers: recognizers,
+        onLinkTap: onLinkTap,
+        latex: latex,
+      ),
       HeadingNode() => _Heading(
-          key: ValueKey<int>(child.id),
-          node: child,
-          baseStyle: baseStyle,
-          recognizers: recognizers,
-          onLinkTap: onLinkTap,
-          latex: latex,
-        ),
+        key: ValueKey<int>(child.id),
+        node: child,
+        baseStyle: baseStyle,
+        recognizers: recognizers,
+        onLinkTap: onLinkTap,
+        latex: latex,
+      ),
       _ => const SizedBox.shrink(),
     };
   }
@@ -346,10 +344,7 @@ class _ListItem extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        SizedBox(
-          width: 24,
-          child: Text(marker, textAlign: TextAlign.right),
-        ),
+        SizedBox(width: 24, child: Text(marker, textAlign: TextAlign.right)),
         const SizedBox(width: 6),
         Expanded(
           child: Column(
@@ -376,4 +371,3 @@ class _ListItem extends StatelessWidget {
     );
   }
 }
-

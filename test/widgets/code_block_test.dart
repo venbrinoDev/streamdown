@@ -32,13 +32,12 @@ void main() {
       expect(find.text('python'), findsOneWidget);
     });
 
-    testWidgets('no language label when fence has no info string',
-        (tester) async {
+    testWidgets('no language label when fence has no info string', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: Scaffold(
-            body: Streamdown.text('```\nplain\n```\n'),
-          ),
+          home: Scaffold(body: Streamdown.text('```\nplain\n```\n')),
         ),
       );
       // The header still exists (for the copy button), but no language text.
@@ -49,11 +48,7 @@ void main() {
     testWidgets('horizontal scroll wraps long lines', (tester) async {
       final long = 'a' * 200;
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Streamdown.text('```\n$long\n```\n'),
-          ),
-        ),
+        MaterialApp(home: Scaffold(body: Streamdown.text('```\n$long\n```\n'))),
       );
       expect(find.byType(SingleChildScrollView), findsWidgets);
     });
@@ -81,9 +76,7 @@ void main() {
 
       await tester.pumpWidget(
         const MaterialApp(
-          home: Scaffold(
-            body: Streamdown.text('```dart\nprint(42);\n```\n'),
-          ),
+          home: Scaffold(body: Streamdown.text('```dart\nprint(42);\n```\n')),
         ),
       );
 
@@ -97,8 +90,9 @@ void main() {
   });
 
   group('Streamdown — codeBlockBuilder', () {
-    testWidgets('custom builder replaces the default rendering',
-        (tester) async {
+    testWidgets('custom builder replaces the default rendering', (
+      tester,
+    ) async {
       var calls = 0;
       String? capturedLang;
       String? capturedCode;
@@ -135,45 +129,45 @@ void main() {
   });
 
   group('Streamdown — code block streaming stability', () {
-    testWidgets(
-      'closed code block element persists across subsequent chunks',
-      (tester) async {
-        final controller = StreamController<String>();
-        addTearDown(controller.close);
+    testWidgets('closed code block element persists across subsequent chunks', (
+      tester,
+    ) async {
+      final controller = StreamController<String>();
+      addTearDown(controller.close);
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(body: Streamdown(stream: controller.stream)),
-          ),
-        );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: Streamdown(stream: controller.stream)),
+        ),
+      );
 
-        controller.add('```dart\nvoid main() {}\n```\n\n');
-        await tester.pump();
-        await tester.pump();
+      controller.add('```dart\nvoid main() {}\n```\n\n');
+      await tester.pump();
+      await tester.pump();
 
-        expect(find.byType(HighlightView), findsOneWidget);
-        final firstElement = tester.element(find.byType(HighlightView));
+      expect(find.byType(HighlightView), findsOneWidget);
+      final firstElement = tester.element(find.byType(HighlightView));
 
-        controller.add('more **bold** text\n');
-        await tester.pump();
-        await tester.pump();
-        controller.add('## A heading\n');
-        await tester.pump();
-        await tester.pump();
+      controller.add('more **bold** text\n');
+      await tester.pump();
+      await tester.pump();
+      controller.add('## A heading\n');
+      await tester.pump();
+      await tester.pump();
 
-        expect(find.byType(HighlightView), findsOneWidget);
-        final after = tester.element(find.byType(HighlightView));
-        expect(
-          identical(firstElement, after),
-          isTrue,
-          reason:
-              'closed code block should not re-mount when later blocks arrive',
-        );
-      },
-    );
+      expect(find.byType(HighlightView), findsOneWidget);
+      final after = tester.element(find.byType(HighlightView));
+      expect(
+        identical(firstElement, after),
+        isTrue,
+        reason:
+            'closed code block should not re-mount when later blocks arrive',
+      );
+    });
 
-    testWidgets('open code block grows as more lines stream in',
-        (tester) async {
+    testWidgets('open code block grows as more lines stream in', (
+      tester,
+    ) async {
       final controller = StreamController<String>();
       addTearDown(controller.close);
 

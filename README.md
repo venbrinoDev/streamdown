@@ -1,6 +1,7 @@
 # streamdown
 
 [![pub package](https://img.shields.io/pub/v/streamdown.svg)](https://pub.dev/packages/streamdown)
+[![CI](https://github.com/jayu1023/streamdown/actions/workflows/ci.yml/badge.svg)](https://github.com/jayu1023/streamdown/actions/workflows/ci.yml)
 [![License: BSD-3-Clause](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
 **Flicker-free streaming markdown renderer for Flutter AI apps.**
@@ -30,6 +31,8 @@ A drop-in replacement for `flutter_markdown` that handles partial code fences, h
 | Per-line syntax highlighting cache | ❌ | ✅ |
 | LaTeX (optional) | ✅ | ✅ |
 | Bundle size | ~80KB | <50KB |
+
+**Headline benchmark** — 5KB markdown, 4-char chunks (typical AI stream cadence): streamdown is **~188× faster** than re-parsing from scratch on every chunk. See [`test/perf/benchmark_test.dart`](test/perf/benchmark_test.dart).
 
 ---
 

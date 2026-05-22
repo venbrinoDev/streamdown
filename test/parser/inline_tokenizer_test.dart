@@ -5,7 +5,9 @@ import 'package:streamdown/src/parser/token.dart';
 void main() {
   group('InlineTokenizer — text & escapes', () {
     test('plain text → single InlineTextToken', () {
-      expect(InlineTokenizer.tokenize('hello'), const [InlineTextToken('hello')]);
+      expect(InlineTokenizer.tokenize('hello'), const [
+        InlineTextToken('hello'),
+      ]);
     });
 
     test('empty string → no tokens', () {
@@ -13,8 +15,9 @@ void main() {
     });
 
     test('backslash escape: \\* is literal *', () {
-      expect(InlineTokenizer.tokenize(r'\*not bold\*'),
-          const [InlineTextToken('*not bold*')]);
+      expect(InlineTokenizer.tokenize(r'\*not bold\*'), const [
+        InlineTextToken('*not bold*'),
+      ]);
     });
 
     test('backslash before non-escapable is literal', () {
@@ -22,8 +25,9 @@ void main() {
     });
 
     test('soft line break joins with a space', () {
-      expect(InlineTokenizer.tokenize('one\ntwo'),
-          const [InlineTextToken('one two')]);
+      expect(InlineTokenizer.tokenize('one\ntwo'), const [
+        InlineTextToken('one two'),
+      ]);
     });
 
     test('hard break: trailing 2 spaces before \\n', () {
@@ -51,8 +55,9 @@ void main() {
     });
 
     test('double backtick code span', () {
-      expect(InlineTokenizer.tokenize('``co`de``'),
-          const [CodeSpanToken('co`de')]);
+      expect(InlineTokenizer.tokenize('``co`de``'), const [
+        CodeSpanToken('co`de'),
+      ]);
     });
 
     test('code span strips one space on each side', () {
@@ -60,8 +65,9 @@ void main() {
     });
 
     test('unclosed backtick is literal', () {
-      expect(InlineTokenizer.tokenize('`not a span'),
-          const [InlineTextToken('`not a span')]);
+      expect(InlineTokenizer.tokenize('`not a span'), const [
+        InlineTextToken('`not a span'),
+      ]);
     });
 
     test('code span before and after text', () {
@@ -134,31 +140,27 @@ void main() {
 
   group('InlineTokenizer — links & images', () {
     test('basic link', () {
-      expect(
-        InlineTokenizer.tokenize('[text](https://x.com)'),
-        const [LinkToken(text: 'text', url: 'https://x.com')],
-      );
+      expect(InlineTokenizer.tokenize('[text](https://x.com)'), const [
+        LinkToken(text: 'text', url: 'https://x.com'),
+      ]);
     });
 
     test('link with title', () {
-      expect(
-        InlineTokenizer.tokenize('[t](https://x.com "hi")'),
-        const [LinkToken(text: 't', url: 'https://x.com', title: 'hi')],
-      );
+      expect(InlineTokenizer.tokenize('[t](https://x.com "hi")'), const [
+        LinkToken(text: 't', url: 'https://x.com', title: 'hi'),
+      ]);
     });
 
     test('image syntax', () {
-      expect(
-        InlineTokenizer.tokenize('![alt](https://x.com/i.png)'),
-        const [LinkToken(text: 'alt', url: 'https://x.com/i.png', isImage: true)],
-      );
+      expect(InlineTokenizer.tokenize('![alt](https://x.com/i.png)'), const [
+        LinkToken(text: 'alt', url: 'https://x.com/i.png', isImage: true),
+      ]);
     });
 
     test('link with bracketed text inside', () {
-      expect(
-        InlineTokenizer.tokenize('[a [b] c](u)'),
-        const [LinkToken(text: 'a [b] c', url: 'u')],
-      );
+      expect(InlineTokenizer.tokenize('[a [b] c](u)'), const [
+        LinkToken(text: 'a [b] c', url: 'u'),
+      ]);
     });
 
     test('unclosed link is literal', () {
@@ -170,13 +172,15 @@ void main() {
 
   group('InlineTokenizer — autolinks', () {
     test('http autolink', () {
-      expect(InlineTokenizer.tokenize('<https://x.com>'),
-          const [AutolinkToken('https://x.com')]);
+      expect(InlineTokenizer.tokenize('<https://x.com>'), const [
+        AutolinkToken('https://x.com'),
+      ]);
     });
 
     test('mailto autolink', () {
-      expect(InlineTokenizer.tokenize('<mailto:a@b.com>'),
-          const [AutolinkToken('mailto:a@b.com')]);
+      expect(InlineTokenizer.tokenize('<mailto:a@b.com>'), const [
+        AutolinkToken('mailto:a@b.com'),
+      ]);
     });
 
     test('non-autolink <foo> is literal', () {

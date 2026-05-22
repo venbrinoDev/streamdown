@@ -104,8 +104,7 @@ class InlineTokenizer {
 
       // Bare URL autolink: http(s)://...
       if (c == 'h' &&
-          (text.startsWith('http://', i) ||
-              text.startsWith('https://', i))) {
+          (text.startsWith('http://', i) || text.startsWith('https://', i))) {
         var end = i;
         while (end < text.length) {
           final ch = text.codeUnitAt(end);
@@ -130,7 +129,7 @@ class InlineTokenizer {
               last == 0x3F /* ? */ ||
               last == 0x29 /* ) */ ||
               last == 0x3A /* : */ ||
-              last == 0x3B /* ; */) {
+              last == 0x3B /* ; */ ) {
             end--;
           } else {
             break;
@@ -155,17 +154,11 @@ class InlineTokenizer {
           }
         }
         // Inline math: $X$ where X starts and ends with non-space.
-        if (i + 1 < text.length &&
-            text[i + 1] != ' ' &&
-            text[i + 1] != r'$') {
+        if (i + 1 < text.length && text[i + 1] != ' ' && text[i + 1] != r'$') {
           final closeIdx = text.indexOf(r'$', i + 1);
-          if (closeIdx != -1 &&
-              closeIdx > i + 1 &&
-              text[closeIdx - 1] != ' ') {
+          if (closeIdx != -1 && closeIdx > i + 1 && text[closeIdx - 1] != ' ') {
             flushText();
-            out.add(MathToken(
-              text.substring(i + 1, closeIdx),
-            ));
+            out.add(MathToken(text.substring(i + 1, closeIdx)));
             i = closeIdx + 1;
             continue;
           }

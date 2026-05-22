@@ -27,7 +27,8 @@ class Parser {
   int _nextId = 1;
 
   // Trailing open pointers — each may be null when no such block is active.
-  AstNode? _openLeaf; // ParagraphNode | CodeBlockNode | TableNode (set _openTable too)
+  AstNode?
+  _openLeaf; // ParagraphNode | CodeBlockNode | TableNode (set _openTable too)
   ListNode? _openList;
   ListItemNode? _openItem;
   BlockquoteNode? _openQuote;
@@ -111,7 +112,7 @@ class Parser {
         if (leaf is CodeBlockNode) {
           leaf.lines.add(content);
         }
-        // Stray code line outside a fence is a tokenizer bug — ignore.
+      // Stray code line outside a fence is a tokenizer bug — ignore.
 
       case FenceCloseToken():
         final leaf = _openLeaf;
@@ -124,12 +125,12 @@ class Parser {
         _handleTextLine(text);
 
       case ListMarkerToken(
-          :final indent,
-          :final ordered,
-          :final number,
-          :final isTask,
-          :final isChecked,
-        ):
+        :final indent,
+        :final ordered,
+        :final number,
+        :final isTask,
+        :final isChecked,
+      ):
         _closeTableIfOpen();
         _closeLeafIfOpen();
         _closeItemOnly();
@@ -177,14 +178,14 @@ class Parser {
       // Inline tokens are produced by InlineTokenizer at render time, not by
       // the block tokenizer. They should never appear in this stream.
       case InlineTextToken() ||
-            StrongDelimToken() ||
-            EmphasisDelimToken() ||
-            StrikeDelimToken() ||
-            CodeSpanToken() ||
-            LinkToken() ||
-            AutolinkToken() ||
-            HardBreakToken() ||
-            MathToken():
+          StrongDelimToken() ||
+          EmphasisDelimToken() ||
+          StrikeDelimToken() ||
+          CodeSpanToken() ||
+          LinkToken() ||
+          AutolinkToken() ||
+          HardBreakToken() ||
+          MathToken():
         break;
     }
   }
