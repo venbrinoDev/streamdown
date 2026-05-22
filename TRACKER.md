@@ -4,7 +4,7 @@ Living document. Update at the end of every working session.
 
 **Source of truth for:** What's done, what's in flight, what's blocked, current velocity.
 
-**Last updated:** 2026-05-22 (end of Day 2 morning, Phase 1 complete)
+**Last updated:** 2026-05-22 (Phase 2 complete)
 
 ---
 
@@ -12,16 +12,16 @@ Living document. Update at the end of every working session.
 
 | Metric | Value |
 |---|---|
-| Current phase | Phase 2 — Parser & AST (next) |
-| Phase progress | Phase 0: 13 / 13 ✅ · Phase 1: 8 / 8 ✅ |
+| Current phase | Phase 3 — Renderer Core (next) |
+| Phase progress | Phases 0–2: all ✅ |
 | Days elapsed | 2 |
-| Days remaining (est.) | 8 |
+| Days remaining (est.) | 7 |
 | Target ship date | 2026-06-01 |
-| 🔴 features done | 8 / 62 (Phase 0 + F-STREAM-01, F-STREAM-05, F-TEST-01) |
+| 🔴 features done | 11 / 62 (+F-CORE-04, F-STREAM-02, F-STREAM-03, F-TEST-02, F-TEST-04) |
 | 🔴 features in progress | 0 |
-| Test coverage | 101 tests passing (tokenizer + inline tokenizer) |
+| Test coverage | 166 tests passing (tokenizer + inline tokenizer + parser) |
 | Open blockers | 0 |
-| Commits | 2 |
+| Commits | 4 (origin/main at GitHub) |
 
 ---
 
@@ -31,8 +31,8 @@ Living document. Update at the end of every working session.
 |---|---|---|---|---|---|---|---|
 | 0 | Foundation | 🟢 Done | 2026-05-22 | 2026-05-22 | 0.5 | 13 / 13 | — |
 | 1 | Tokenizer | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 8 / 8 | — |
-| 2 | Parser & AST | ⚪ Not started (ready) | — | — | — | 0 / 6 | — |
-| 3 | Renderer Core | ⚪ Not started | — | — | — | 0 / 8 | Phase 2 |
+| 2 | Parser & AST | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 6 / 6 | — |
+| 3 | Renderer Core | ⚪ Not started (ready) | — | — | — | 0 / 8 | — |
 | 4 | Code Blocks | ⚪ Not started | — | — | — | 0 / 10 | Phase 3 |
 | 5 | Tables | ⚪ Not started | — | — | — | 0 / 6 | Phase 3 |
 | 6 | Polish & Optional | ⚪ Not started | — | — | — | 0 / 8 | Phase 5 |
@@ -81,8 +81,8 @@ Living document. Update at the end of every working session.
 
 | Category | Total | Done | In progress | Blocked |
 |---|---|---|---|---|
-| Core Rendering | 7 | 0 | 0 | 0 |
-| Streaming Engine | 8 | 2 | 0 | 0 |
+| Core Rendering | 7 | 1 | 0 | 0 |
+| Streaming Engine | 8 | 4 | 0 | 0 |
 | Block-level Markdown | 13 | 0 | 0 | 0 |
 | Inline Markdown | 12 | 0 | 0 | 0 |
 | Code Blocks | 11 | 0 | 0 | 0 |
@@ -91,10 +91,10 @@ Living document. Update at the end of every working session.
 | Customization | 9 | 0 | 0 | 0 |
 | Performance | 5 | 0 | 0 | 0 |
 | Developer Experience | 9 | 4 | 0 | 0 |
-| Quality / Testing | 8 | 1 | 0 | 0 |
+| Quality / Testing | 8 | 3 | 0 | 0 |
 | Distribution | 6 | 1 | 0 | 0 |
 | Launch / Viral | 7 | 0 | 0 | 0 |
-| **Total** | **88** | **8** | **0** | **0** |
+| **Total** | **88** | **11** | **0** | **0** |
 
 ---
 
@@ -111,6 +111,9 @@ Record any non-obvious decision here so future-you (or future-Claude) doesn't re
 | 2026-05-22 | `flutter_highlight` for syntax highlighting (not roll our own) | Mature, 200+ langs, low maintenance burden |
 | 2026-05-22 | Two-class tokenizer split: block tokenizer is incremental (line-based, append-only), inline tokenizer is pure/non-incremental | Block tokenization needs to handle stream boundaries; inline tokenization runs on short paragraph text and is fast enough to re-run from scratch on each chunk |
 | 2026-05-22 | Emphasis/strong/strike emitted as raw delimiter tokens (`StrongDelimToken`, `EmphasisDelimToken`, `StrikeDelimToken`); parser pairs them | Avoids re-implementing CommonMark's "process emphasis" algorithm twice; pairing requires context only the parser has |
+| 2026-05-22 | v0.1 ships single-level blockquotes only (nested `>>` flattened to depth=1 in AST) | Real-world AI markdown rarely nests blockquotes; tokenizer captures depth so nested support can be added in v0.2 without breaking changes |
+| 2026-05-22 | Lists close on any blank line (no CommonMark loose-list distinction) | Predictable behavior, easy to mentally model; AI markdown uses blank lines liberally between blocks |
+| 2026-05-22 | `parser.complete()` finalizes paragraphs/lists/tables/quotes but leaves unclosed code blocks `isComplete: false` | The OPEN state is a useful signal to the renderer that the stream ended mid-block (network error, mid-token) — distinct from "stream ended at a natural boundary" |
 
 ---
 
@@ -130,6 +133,7 @@ Record any non-obvious decision here so future-you (or future-Claude) doesn't re
 |---|---|---|---|
 | 2026-05-22 | 0 | 1.5 | Phase 0 complete: scaffold + 4 planning docs + deps + lints + folder structure + first commit. Analyze clean, test green. |
 | 2026-05-22 | 1 | 1.0 | Phase 1 complete: Token sealed hierarchy (16 token types), incremental block Tokenizer (line-based state machine, fence-aware), InlineTokenizer (delimiters + code spans + links/images + autolinks + hard breaks). 101 tests passing — chunked-vs-whole equivalence verified across 10 samples × 3 chunk sizes + append-only invariant + perf benchmark. |
+| 2026-05-22 | 2 | 1.0 | Phase 2 complete: AstNode sealed hierarchy (9 node types with monotonic IDs), Parser (token → AST with trailing-path-only mutation, table promotion via separator lookahead, list/blockquote state). 166 tests passing — snapshot tests for every block type + chunked-vs-whole AST equivalence across 10 samples × 3 chunk sizes + ID monotonicity + immutability of closed nodes. `complete()` preserves unclosed code blocks as OPEN signal. |
 
 ---
 
