@@ -8,11 +8,9 @@
 
 A drop-in replacement for `flutter_markdown` that handles partial code fences, half-finished tables, and mid-stream LaTeX without re-parsing the prefix on every chunk. Built for ChatGPT-style apps where every token counts.
 
-> 📦 **Status:** functional, in pre-release. All 🔴 features implemented. See [`TRACKER.md`](TRACKER.md) for the live build log. Hero GIF is recorded just before pub.dev publish — see [`example/screenshots/RECORDING.md`](example/screenshots/RECORDING.md).
+![streamdown vs flutter_markdown — same stream, side by side](example/screenshots/split_screen_demo.gif)
 
-<!-- Once recorded, embed here:
-![streamdown vs flutter_markdown](example/screenshots/split_screen_demo.gif)
--->
+> 📦 **Status:** functional, pre-release. All 🔴 features implemented. See [`TRACKER.md`](TRACKER.md) for the live build log.
 
 ---
 

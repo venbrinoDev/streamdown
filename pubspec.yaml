@@ -12,9 +12,9 @@ topics:
   - llm
   - chat
 
-# screenshots:
-#   - description: 'Split-screen demo: flutter_markdown (left, janky) vs streamdown (right, smooth).'
-#     path: example/screenshots/split_screen_demo.gif
+screenshots:
+  - description: 'Split-screen demo — flutter_markdown (left) vs streamdown (right) on the same OpenAI-style stream.'
+    path: example/screenshots/split_screen_demo.gif
 
 environment:
   sdk: ^3.9.2
