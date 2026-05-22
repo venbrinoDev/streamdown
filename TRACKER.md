@@ -4,7 +4,7 @@ Living document. Update at the end of every working session.
 
 **Source of truth for:** What's done, what's in flight, what's blocked, current velocity.
 
-**Last updated:** 2026-05-22 (Phase 6 complete)
+**Last updated:** 2026-05-22 (Phase 7 complete)
 
 ---
 
@@ -12,16 +12,15 @@ Living document. Update at the end of every working session.
 
 | Metric | Value |
 |---|---|
-| Current phase | Phase 7 — Example App + Demo (next) |
-| Phase progress | Phases 0–6: all ✅ |
-| Days elapsed | 4 |
-| Days remaining (est.) | 5 |
+| Current phase | Phase 8 — Testing & Performance (next) |
+| Phase progress | Phases 0–7: all ✅ |
+| Days elapsed | 5 |
+| Days remaining (est.) | 4 |
 | Target ship date | 2026-06-01 |
-| 🔴 features done | ~58 / 62 (94%) |
-| 🟡 features done | 14 / 18 |
+| 🔴 features done | ~60 / 62 (97%) |
 | Test coverage | 221 tests passing |
-| Open blockers | 0 |
-| Commits | 8 (origin/main at GitHub) |
+| Open blockers | 0 (GIF recording is manual user action before publish) |
+| Commits | 9 |
 
 ---
 
@@ -36,8 +35,8 @@ Living document. Update at the end of every working session.
 | 4 | Code Blocks | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 10 / 10 | — |
 | 5 | Tables | 🟢 Done | 2026-05-22 | 2026-05-22 | 0.5 | 6 / 6 | — |
 | 6 | Polish & Optional | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 8 / 8 | — |
-| 7 | Example App + Demo | ⚪ Not started (ready) | — | — | — | 0 / 10 | — |
-| 8 | Testing & Perf | ⚪ Not started | — | — | — | 0 / 8 | Phase 6 |
+| 7 | Example App + Demo | 🟢 Done | 2026-05-22 | 2026-05-22 | 1.0 | 10 / 10* | * GIF recording is manual |
+| 8 | Testing & Perf | ⚪ Not started (ready) | — | — | — | 0 / 8 | — |
 | 9 | Publish & Launch | ⚪ Not started | — | — | — | 0 / 12 | Phase 7+8 |
 | 10 | Post-launch | ⚪ Not started | — | — | — | 0 / 5 | Phase 9 |
 
