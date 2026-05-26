@@ -45,7 +45,7 @@ Living document for tracking execution of [`NEXT_PHASE.md`](NEXT_PHASE.md).
 |---|---|---|---|---|---|---|
 | B1 | Awesome Flutter PR | 🔴 P0 | 🟡 Draft ready · user to submit | 45 min | agent (draft) + user (submit) | 1/3 |
 | B2 | Live demo site (GH Pages) | 🔴 P0 | 🟢 **DEPLOYED** at https://jayu1023.github.io/streamdown/ | 1 day | agent | 4/7 |
-| B3 | Newsletter + curator outreach | 🟡 P1 | 🟡 5 drafts ready · user to send | 2 hrs | agent (drafts) + user (send) | 5/6 |
+| B3 | Newsletter + curator outreach | 🟡 P1 | 🟡 1/5 sent (Flutter Tap tweet ✅) | 2 hrs | agent (drafts) + user (send) | — |
 | B4 | Influencer + integration seeding | 🟡 P1 | ⚪ Not started | ongoing | user-led | — |
 
 ### Track C — Product v0.2 (Week 3–6)
@@ -83,6 +83,7 @@ Append a new row every working session. Newest at the top.
 
 | Date | Phases worked | Status change | Notes |
 |---|---|---|---|
+| 2026-05-26 (PM2) | B2 deploy, B3 (Flutter Tap) | Demo live at https://jayu1023.github.io/streamdown/ ✅; Flutter Tap tweet posted ✅ | HTTP 200 verified on demo. Tweet: https://x.com/jaylimb03893746/status/2058085290200473678 |
 | 2026-05-26 (PM) | A1, A2, A3, B1, B2, B3, D1 | **0.1.0 shipped to pub.dev**; web build green; 2 user-action drafts queued | 215/215 tests pass, 191× benchmark, 0 lint, 0 dry-run warnings. GitHub release v0.1.0 tagged. METRICS.md baseline logged. Awesome Flutter + 5 outreach drafts in this tracker. Web build at `example/build/web/`. |
 | 2026-05-26 (AM) | — | Baseline tracker created | NEXT_PHASE.md authored; agent definition installed at `.claude/agents/streamdown-growth-executor.md` |
 

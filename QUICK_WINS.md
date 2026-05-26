@@ -13,7 +13,7 @@
 | 1 | Verify publisher domain (DNS TXT record) | 5 min | $0 |
 | 2 | Submit Awesome Flutter PR | 10 min | $0 |
 | 3 | Deploy demo to GitHub Pages | 5 min | $0 |
-| 4 | Tweet `@fluttertap` | 30 sec | $0 |
+| 4 | Tweet `@fluttertap` ✅ DONE | 30 sec | $0 |
 | 5 | Post in Flutter Discord `#showcase` | 1 min | $0 |
 | 6 | Email Flutter Digest | 2 min | $0 |
 | 7 | Email Flutter Insider | 2 min | $0 |
@@ -195,19 +195,19 @@ cd build/web && git add . && git commit -m "Redeploy" && git push -f origin gh-p
 
 ---
 
-# 4. Flutter Tap tweet *(30 sec)*
+# 4. Flutter Tap tweet *(✅ DONE 2026-05-26)*
 
-Tweet this with the demo GIF attached:
+**Posted:** https://x.com/jaylimb03893746/status/2058085290200473678
 
-```
-@fluttertap might be useful for your readers — shipped streamdown 0.1.0 today, a flicker-free streaming markdown renderer for Flutter AI apps. 188× faster than flutter_markdown on chunked input. Drop-in API:
+✅ Status:
+- Tweet live with `@fluttertap` mention
+- Demo GIF attached
+- Both pub.dev and live-demo URLs included
 
-Streamdown(stream: openai.responseStream)
-
-📦 https://pub.dev/packages/streamdown
-```
-
-GIF path: `example/screenshots/split_screen_demo.gif`
+**Follow-up tasks (next 24 hrs):**
+- [ ] Reply to any replies within 30 min for the first 2 hours
+- [ ] Pin to profile if not already pinned (Profile → tweet → `...` → Pin to your profile)
+- [ ] Quote-tweet your own launch tweet ~6 hours later with a follow-up code snippet or benchmark stat
 
 ---
 
@@ -333,7 +333,7 @@ Happy to dig into any of the three tricks if anyone's curious.
 | When | Do |
 |---|---|
 | **Right now** | Steps 1–3 (DNS, PR, GH Pages) |
-| **Today morning** | Steps 4 + 6 (Twitter + Flutter Digest email) |
+| **Today morning** | Steps 4 ✅ + 6 (Twitter ✅ + Flutter Digest email) |
 | **Today evening** | Step 5 (Discord) |
 | **Tomorrow morning** | Step 7 (Flutter Insider) |
 | **Tomorrow 8–10 AM EDT** | Step 8 (r/Flutter) |
