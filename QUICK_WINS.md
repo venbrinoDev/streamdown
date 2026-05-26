@@ -154,21 +154,26 @@ Thanks for maintaining this list!
 
 ---
 
-# 3. Deploy demo to GitHub Pages *(5 min)*
+# 3. Deploy demo to GitHub Pages *(✅ DONE 2026-05-26)*
 
-Web build is already done at `example/build/web/`. Just push it.
+Claude deployed the `example/build/web/` output to the `gh-pages` branch and GitHub Pages is building.
 
+**Live URL:** https://jayu1023.github.io/streamdown/
+
+✅ Status:
+- Web build pushed to `gh-pages` branch
+- GitHub Pages enabled on that branch (was already configured)
+- `.nojekyll` file added (prevents Jekyll from mangling Flutter's underscore-prefixed assets)
+- README updated with "▶ Try it live" link above the demo GIF
+- HTTPS enforced
+
+⏳ Allow 2–5 min after deploy for GitHub Pages to finish building before the URL loads.
+
+**To redeploy after a code change** (Claude can do this for you on request):
 ```bash
-cd "/Users/limbanijayhasmukhbhai/Downloads/jayu pcakage/streamdown/example/build/web"
-git init && git checkout -b gh-pages
-git add . && git commit -m "Deploy streamdown demo"
-git remote add origin https://github.com/jayu1023/streamdown.git
-git push -f origin gh-pages
+cd example && flutter build web --release --base-href "/streamdown/"
+cd build/web && git add . && git commit -m "Redeploy" && git push -f origin gh-pages
 ```
-
-Then on GitHub: **Settings → Pages → Source: `gh-pages` branch / `/root`** → Save.
-
-✅ Demo live at `https://jayu1023.github.io/streamdown/` in ~2 min.
 
 ---
 

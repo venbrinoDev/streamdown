@@ -6,6 +6,8 @@
 
 **Flicker-free streaming markdown for Flutter AI apps. 188× faster than `flutter_markdown` on chunked input. Drop-in API.**
 
+▶ **[Try it live](https://jayu1023.github.io/streamdown/)** — side-by-side comparison in your browser, no install needed.
+
 ![streamdown vs flutter_markdown — same stream, side by side](example/screenshots/split_screen_demo.gif)
 
 ## 30-second adoption

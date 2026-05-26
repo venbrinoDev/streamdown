@@ -44,7 +44,7 @@ Living document for tracking execution of [`NEXT_PHASE.md`](NEXT_PHASE.md).
 | # | Phase | Priority | Status | Est. | Owner | DoD met? |
 |---|---|---|---|---|---|---|
 | B1 | Awesome Flutter PR | 🔴 P0 | 🟡 Draft ready · user to submit | 45 min | agent (draft) + user (submit) | 1/3 |
-| B2 | Live demo site (streamdown.dev or GH Pages) | 🔴 P0 | 🟡 Built locally · awaiting deploy | 1 day | agent | 1/7 |
+| B2 | Live demo site (GH Pages) | 🔴 P0 | 🟢 **DEPLOYED** at https://jayu1023.github.io/streamdown/ | 1 day | agent | 4/7 |
 | B3 | Newsletter + curator outreach | 🟡 P1 | 🟡 5 drafts ready · user to send | 2 hrs | agent (drafts) + user (send) | 5/6 |
 | B4 | Influencer + integration seeding | 🟡 P1 | ⚪ Not started | ongoing | user-led | — |
 
