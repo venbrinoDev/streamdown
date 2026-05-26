@@ -68,21 +68,39 @@ When merged, your package shows up in the list forever and Google indexes it. Th
 8. The file opens in GitHub's web editor (looks like a big textarea)
 
 ### Step D — Find the right section
-9. Press **`Ctrl+F`** (Windows) or **`Cmd+F`** (Mac) in the editor → type `### Markdown` → press Enter
-10. You'll see a section listing markdown-related packages. Look for the line about `markdown_widget`. It looks like:
+
+> ⚠️ **Correction:** Awesome Flutter does NOT have a `### Markdown` section. The right place is `### Text & Rich Content`. I had this wrong in an earlier version of this doc.
+
+9. Press **`Ctrl+F`** (Windows) or **`Cmd+F`** (Mac) in the editor → type `### Text & Rich Content` → press Enter
+10. You should jump to a section that looks like this (around line 320):
+
     ```
-    * [markdown_widget](https://github.com/asjqkkkk/markdown_widget) - ...
+    ### Text & Rich Content
+
+    - [Masked Text](https://github.com/benhurott/flutter-masked-text) [275⭐] - Masked text with custom and monetary formatting...
+    - [Fleather](https://github.com/fleather-editor/fleather) <!--stargazersfleather-editor/fleather--> - Soft & gentle rich text editor.
+    - [AutoSizeText](https://github.com/leisim/auto_size_text) [2111⭐] - Automatically resizes text...
+    - [Parsed Text](https://github.com/fayeed/flutter_parsed_text) [222⭐] - Interactive text based on content recognition...
+    - [TeX](https://github.com/shah-xad/flutter_tex) [295⭐] - Render Mathematics Equations...
+    - [Code Field](https://github.com/BertrandBev/code_field) - Customizable code field widget supporting syntax highlighting...
     ```
+
+11. Find the **last entry** in the section (`Code Field` line)
 
 ### Step E — Add the streamdown line
-11. Click at the **end** of the `markdown_widget` line → press **Enter** to make a new line
-12. Paste exactly this:
+
+12. Click at the **end** of the `Code Field` line → press **Enter** to start a new line
+13. Paste exactly this:
 
 ```markdown
-* [streamdown](https://github.com/jayu1023/streamdown) - Flicker-free streaming markdown renderer for Flutter AI apps. 188× faster than `flutter_markdown` on chunked input. Drop-in API for ChatGPT-style streaming UIs.
+- [streamdown](https://github.com/jayu1023/streamdown) <!--stargazersjayu1023/streamdown--> - Flicker-free streaming markdown renderer for Flutter AI chat apps. 188× faster than `flutter_markdown` on chunked input. Drop-in API.
 ```
 
-13. Double-check: line starts with `* [streamdown]` — the `*` and space are critical for markdown formatting
+14. **Critical formatting checks:**
+    - ✅ Line starts with `- ` (dash + space), NOT `* ` — Awesome Flutter uses dashes
+    - ✅ Includes the `<!--stargazersjayu1023/streamdown-->` comment — the repo's CI auto-fills star counts later
+    - ✅ Description ends with a period
+    - ✅ One blank line should separate the section from the next `### Forms` header (don't remove it)
 
 ### Step F — Commit the change
 14. Scroll to the **bottom** of the page → you'll see a "Commit changes" box
