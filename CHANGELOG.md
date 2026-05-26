@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] — 2026-05-26
+
+Stable API surface. Same engine as 0.0.1, repositioned as the first production
+release. Public widget API and chunk semantics are locked for the 0.1.x line.
+
+### Changed
+- Marked stable. The `Streamdown` and `Streamdown.text` constructors, the
+  `Stream<String>` delta-chunk contract, and the `SyntaxTheme` / `CodeBlockBuilder`
+  hooks will not break within 0.1.x.
+- Replaced topic `chat` with `openai` for better pub.dev search discoverability
+  by AI provider.
+- README hero restructured to lead with the headline benchmark (188× faster than
+  `flutter_markdown` on chunked input) and a 30-second drop-in snippet.
+
+### Fixed
+- Removed the "pre-release" framing from package docs; the engine has been
+  battle-passed through 224 tests and a 160/160 pana score since 0.0.1.
+
 ## [0.0.1]
 
 Initial pre-release. Flicker-free streaming markdown for Flutter AI apps.

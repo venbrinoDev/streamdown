@@ -4,13 +4,26 @@
 [![CI](https://github.com/jayu1023/streamdown/actions/workflows/ci.yml/badge.svg)](https://github.com/jayu1023/streamdown/actions/workflows/ci.yml)
 [![License: BSD-3-Clause](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
-**Flicker-free streaming markdown renderer for Flutter AI apps.**
-
-A drop-in replacement for `flutter_markdown` that handles partial code fences, half-finished tables, and mid-stream LaTeX without re-parsing the prefix on every chunk. Built for ChatGPT-style apps where every token counts.
+**Flicker-free streaming markdown for Flutter AI apps. 188× faster than `flutter_markdown` on chunked input. Drop-in API.**
 
 ![streamdown vs flutter_markdown — same stream, side by side](example/screenshots/split_screen_demo.gif)
 
-> 📦 **Status:** functional, pre-release. All 🔴 features implemented. See [`TRACKER.md`](TRACKER.md) for the live build log.
+## 30-second adoption
+
+```dart
+// Before
+Markdown(data: response)
+
+// After
+Streamdown(stream: openai.responseStream)
+```
+
+```yaml
+dependencies:
+  streamdown: ^0.1.0
+```
+
+That's it. Theme, code highlighting, link tap, and selectable text Just Work out of the box.
 
 ---
 
@@ -31,31 +44,6 @@ A drop-in replacement for `flutter_markdown` that handles partial code fences, h
 | Bundle size | ~80KB | <50KB |
 
 **Headline benchmark** — 5KB markdown, 4-char chunks (typical AI stream cadence): streamdown is **~188× faster** than re-parsing from scratch on every chunk. See [`test/perf/benchmark_test.dart`](test/perf/benchmark_test.dart).
-
----
-
-## Install
-
-```yaml
-dependencies:
-  streamdown: ^0.0.1
-```
-
----
-
-## Basic usage
-
-```dart
-import 'package:streamdown/streamdown.dart';
-
-// Streaming (typical AI chat use case)
-Streamdown(stream: openai.responseStream)
-
-// Static (non-stream) markdown
-Streamdown.text(fullMarkdownString)
-```
-
-That's it. Theme, code highlighting, link tap, and selectable text Just Work out of the box.
 
 ---
 
@@ -107,20 +95,9 @@ Six scenarios are included:
 
 ---
 
-## Status
+## Used by
 
-| Feature category | Status |
-|---|---|
-| Streaming engine | ✅ |
-| Block-level markdown | ✅ |
-| Code blocks (syntax highlighted) | ✅ |
-| Tables (GFM, alignment, inline-in-cells) | ✅ |
-| LaTeX (behind `latex: true` flag) | ✅ |
-| Example app | ✅ |
-| Hero demo GIF | 🚧 record before publish |
-| Pub.dev publish | 🎯 Phase 9 |
-
-See [`TRACKER.md`](TRACKER.md) for live status.
+Building something with streamdown? Open a PR adding your project here, or drop a note in [Discussions](https://github.com/jayu1023/streamdown/discussions).
 
 ---
 
