@@ -216,23 +216,10 @@ https://pub.dev/packages/streamdown
 ## Engagement checklist (first 24 hours)
 
 - [ ] Pin the launch tweet to your X profile
-- [ ] Add topics to the GitHub repo:
-      ```bash
-      gh repo edit jayu1023/streamdown \
-        --add-topic flutter \
-        --add-topic dart \
-        --add-topic ai \
-        --add-topic markdown \
-        --add-topic streaming
-      ```
-- [ ] Tag the release on GitHub:
-      ```bash
-      gh release create v0.0.1 \
-        --title "v0.0.1 — initial release" \
-        --generate-notes
-      ```
+- [x] Add topics to the GitHub repo (flutter, dart, ai, markdown, streaming, llm, chat) — done via `gh repo edit`
+- [x] Tag the release on GitHub — `v0.0.1` live at <https://github.com/jayu1023/streamdown/releases/tag/v0.0.1>
+- [x] Open a "Feedback welcome" GitHub Discussion — created at <https://github.com/jayu1023/streamdown/discussions/1> (⚠️ pin it manually in the UI — pinning isn't exposed via API)
 - [ ] Reply to every Twitter / Reddit / HN comment within 30 minutes
-- [ ] Open a "Feedback welcome" pinned GitHub Discussion so newcomers have a clear place to land
 - [ ] Watch for issues — address any P0 bug within 24h, minor stuff within a week
 - [ ] Refresh https://pub.dev/packages/streamdown — confirm the score lands at 160/160 after their scorer runs (~5–10 min)
 
@@ -247,8 +234,10 @@ https://pub.dev/packages/streamdown
 - [x] Hero GIF recorded + embedded
 - [x] `dart pub publish` succeeded
 - [x] Launch tweet posted
-- [ ] Reddit post (now)
-- [ ] LinkedIn post (in a few hours)
-- [ ] Show HN (tomorrow morning)
-- [ ] Dev.to article (this week)
-- [ ] Engagement loop (next 24 hours)
+- [x] Reddit post
+- [x] LinkedIn post
+- [x] Show HN
+- [x] Dev.to article — full draft ready at `DEVTO_ARTICLE.md` (paste body into <https://dev.to/new>, frontmatter handles tags/cover image)
+- [x] GitHub: topics + v0.0.1 release + Discussions enabled + welcome thread
+- [ ] Pin the welcome Discussion in the UI (one click — API doesn't expose it)
+- [ ] Engagement loop (next 24 hours) — reply to every comment within 30 min
