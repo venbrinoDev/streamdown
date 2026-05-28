@@ -114,6 +114,54 @@ void main() {
       ]);
     });
 
+    test('intra-word _ is literal (foo_bar)', () {
+      expect(InlineTokenizer.tokenize('foo_bar'), const [
+        InlineTextToken('foo_bar'),
+      ]);
+    });
+
+    test('intra-word _ run is literal (foo__bar)', () {
+      expect(InlineTokenizer.tokenize('foo__bar'), const [
+        InlineTextToken('foo__bar'),
+      ]);
+    });
+
+    test('intra-word _ does not italicize (macOS_System)', () {
+      expect(InlineTokenizer.tokenize('macOS_System'), const [
+        InlineTextToken('macOS_System'),
+      ]);
+    });
+
+    test('multi-segment intra-word _ stays literal (foo_bar_baz)', () {
+      expect(InlineTokenizer.tokenize('foo_bar_baz'), const [
+        InlineTextToken('foo_bar_baz'),
+      ]);
+    });
+
+    test('intra-word _ inside sentence stays literal', () {
+      expect(InlineTokenizer.tokenize('use macOS_System here'), const [
+        InlineTextToken('use macOS_System here'),
+      ]);
+    });
+
+    test('boundary _ still emphasizes (_em_)', () {
+      expect(InlineTokenizer.tokenize('_em_'), const [
+        EmphasisDelimToken('_'),
+        InlineTextToken('em'),
+        EmphasisDelimToken('_'),
+      ]);
+    });
+
+    test('* still works intra-word (foo*bar*baz)', () {
+      expect(InlineTokenizer.tokenize('foo*bar*baz'), const [
+        InlineTextToken('foo'),
+        EmphasisDelimToken('*'),
+        InlineTextToken('bar'),
+        EmphasisDelimToken('*'),
+        InlineTextToken('baz'),
+      ]);
+    });
+
     test('strikethrough', () {
       expect(InlineTokenizer.tokenize('~~gone~~'), const [
         StrikeDelimToken(),

@@ -207,6 +207,23 @@ class InlineTokenizer {
         while (i + runLen < text.length && text[i + runLen] == c) {
           runLen++;
         }
+        // CommonMark §6.2: `_` is more restrictive than `*` — it cannot
+        // open/close emphasis intra-word. If a `_` run is flanked by word
+        // characters on BOTH sides (e.g. `macOS_System`, `foo_bar_baz`),
+        // emit it as literal text instead of an emphasis delimiter.
+        if (c == '_') {
+          final beforeIsWord =
+              i > 0 && _isWordChar(text.codeUnitAt(i - 1));
+          final afterIsWord = i + runLen < text.length &&
+              _isWordChar(text.codeUnitAt(i + runLen));
+          if (beforeIsWord && afterIsWord) {
+            for (var k = 0; k < runLen; k++) {
+              buf.write('_');
+            }
+            i += runLen;
+            continue;
+          }
+        }
         flushText();
         // Emit one StrongDelim per `**` pair, plus one Emphasis for any leftover.
         var emitted = 0;
@@ -345,6 +362,13 @@ class _LinkParseResult {
 
   final LinkToken token;
   final int end;
+}
+
+bool _isWordChar(int code) {
+  return (code >= 0x30 && code <= 0x39) || // 0-9
+      (code >= 0x41 && code <= 0x5A) || // A-Z
+      (code >= 0x61 && code <= 0x7A) || // a-z
+      code >= 0x80; // non-ASCII letters (conservative — treat as word)
 }
 
 final RegExp _escapableRe = RegExp(r'[\\`*_{}\[\]()#+\-.!~|]');
