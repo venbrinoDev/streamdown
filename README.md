@@ -41,6 +41,11 @@ That's it. Theme, code highlighting, link tap, and selectable text Just Work out
 | Provisional code fence rendering | ❌ | ✅ |
 | Provisional table rows | ❌ | ✅ |
 | Stable widget keys during stream | ❌ | ✅ |
+| Word/char-level streaming animation | ❌ | ✅ |
+| Blinking caret cursor | ❌ | ✅ |
+| CJK-friendly emphasis | ❌ | ✅ |
+| Code block line numbers | ❌ | ✅ |
+| Table copy (CSV/TSV/Markdown) | ❌ | ✅ |
 | Per-line syntax highlighting cache | ❌ | ✅ |
 | LaTeX (optional) | ✅ | ✅ |
 | Bundle size | ~80KB | <50KB |
@@ -62,7 +67,59 @@ Streamdown(
 )
 ```
 
-See [`example/`](example/) for six runnable scenarios including a side-by-side comparison with `flutter_markdown`.
+### Animation
+
+Streaming text animates word-by-word or character-by-character, matching every new chunk with a smooth entrance:
+
+```dart
+Streamdown(
+  stream: myStream,
+  animated: true,                         // Fade in new text word-by-word
+  showCaret: true,                        // Blinking cursor at end of stream
+  animateConfig: AnimateConfig(            // Optional: tune the animation
+    animation: 'fadeIn',  // 'fadeIn' | 'blurIn' | 'slideUp'
+    sep: 'word',          // 'word' | 'char'
+    duration: 150,        // ms per element
+    stagger: 40,          // ms between elements
+  ),
+)
+```
+
+Already-visible text never re-animates — only newly arrived characters receive effects. Code spans and links are skipped (they render instantly) matching React's behavior.
+
+### Code blocks
+
+```dart
+Streamdown(
+  stream: myStream,
+  lineNumbers: true,      // Gutter line numbers (default: true)
+  codeBlockBuilder: (lang, code, isComplete) => MyCustomWidget(...),
+)
+```
+
+### CJK text
+
+```dart
+Streamdown(
+  stream: myStream,
+  cjk: true,              // Enables CJK-friendly emphasis and autolink boundary splitting
+)
+```
+
+When enabled, `_强调_` and `*强调*。` work correctly. Bare URLs like `https://example.com。` split at CJK punctuation.
+
+### Table copy
+
+Tables include a dropdown button to copy as Markdown, CSV, or TSV. The formatters are also exported for direct use:
+
+```dart
+import 'package:streamdown/streamdown.dart';
+
+final csv = tableDataToCSV(tableNode);
+final md  = tableDataToMarkdown(tableNode);
+```
+
+See [`example/`](example/) for runnable scenarios including a side-by-side comparison with `flutter_markdown`.
 
 ---
 

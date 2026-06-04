@@ -13,21 +13,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../parser/parser.dart';
+import '../parser/remend.dart';
 import '../parser/tokenizer.dart';
+import 'animation.dart';
 import 'ast_renderer.dart';
 import 'syntax_theme.dart';
 
-/// Flicker-free streaming markdown widget.
-///
-/// Drop-in replacement for `flutter_markdown` that handles partial code
-/// fences, half-finished tables, and mid-stream inline formatting without
-/// re-parsing the prefix on every chunk.
 class Streamdown extends StatefulWidget {
   /// Streaming constructor — render markdown as chunks arrive on [stream].
-  ///
-  /// Chunks are append-only: each event should be the **new** text since the
-  /// previous event, not a cumulative buffer. This matches OpenAI / Anthropic
-  /// / Gemini SDK conventions.
   const Streamdown({
     super.key,
     required Stream<String> stream,
@@ -39,11 +32,17 @@ class Streamdown extends StatefulWidget {
     this.codeBlockBuilder,
     this.latex = false,
     this.errorBuilder,
+    this.parseIncompleteMarkdown = true,
+    this.remendOptions,
+    this.lineNumbers = true,
+    this.cjk = false,
+    this.animated = false,
+    this.animateConfig,
+    this.showCaret = false,
   }) : _stream = stream,
        _text = null;
 
-  /// Static constructor — render a complete markdown string. Uses the same
-  /// incremental parser internally.
+  /// Static constructor — render a complete markdown string.
   const Streamdown.text(
     String text, {
     super.key,
@@ -55,59 +54,63 @@ class Streamdown extends StatefulWidget {
     this.codeBlockBuilder,
     this.latex = false,
     this.errorBuilder,
+    this.parseIncompleteMarkdown = true,
+    this.remendOptions,
+    this.lineNumbers = true,
+    this.cjk = false,
+    this.animated = false,
+    this.animateConfig,
+    this.showCaret = false,
   }) : _stream = null,
        _text = text;
 
   final Stream<String>? _stream;
   final String? _text;
 
-  /// Base text style for paragraph and inline text. Headings layer on the
-  /// theme's textTheme above this.
   final TextStyle? textStyle;
-
-  /// When true (default), the rendered text is selectable via
-  /// [SelectionArea]. Set to false for tap-through layouts.
   final bool selectable;
-
-  /// Called when a link or autolink is tapped.
   final void Function(Uri uri)? onLinkTap;
-
-  /// Optional padding around the rendered document.
   final EdgeInsetsGeometry? padding;
-
-  /// Override the syntax-highlight color scheme for fenced code blocks.
-  /// Defaults to [SyntaxTheme.auto] (follows ambient brightness).
   final SyntaxTheme? syntaxTheme;
-
-  /// Full override for code block rendering. When non-null, this is called
-  /// instead of the default [CodeBlockWidget] for every fenced code block.
-  /// Useful for line numbers, custom themes, or non-standard layouts.
   final CodeBlockBuilder? codeBlockBuilder;
-
-  /// When true, `$...$` is rendered as inline LaTeX math and `$$...$$` as
-  /// block math via the `flutter_math_fork` package. Defaults to false so
-  /// dollar amounts (`$10`, `$20`) don't get treated as math.
   final bool latex;
-
-  /// Called when the input stream emits an error. Returning null falls back
-  /// to silently dropping the error.
   final Widget Function(
     BuildContext context,
     Object error,
     StackTrace? stackTrace,
   )?
   errorBuilder;
+  final bool parseIncompleteMarkdown;
+  final RemendOptions? remendOptions;
+  final bool lineNumbers;
+  final bool cjk;
+  final bool animated;
+  final AnimateConfig? animateConfig;
+  final bool showCaret;
 
   @override
   State<Streamdown> createState() => _StreamdownState();
 }
 
 class _StreamdownState extends State<Streamdown> {
-  late Tokenizer _tokenizer;
-  late Parser _parser;
+  Tokenizer _tokenizer = Tokenizer();
+  Parser _parser = Parser();
   StreamSubscription<String>? _sub;
   Object? _streamError;
   StackTrace? _streamStack;
+  String _accumulatedBuffer = '';
+  int _lastProcessedLength = 0;
+  bool _streamActive = false;
+  bool _rebuildScheduled = false;
+
+  void _scheduleRebuild() {
+    if (_rebuildScheduled) return;
+    _rebuildScheduled = true;
+    scheduleMicrotask(() {
+      _rebuildScheduled = false;
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   void initState() {
@@ -137,6 +140,10 @@ class _StreamdownState extends State<Streamdown> {
     _parser = Parser();
     _streamError = null;
     _streamStack = null;
+    _accumulatedBuffer = '';
+    _lastProcessedLength = 0;
+    _streamActive = true;
+    _rebuildScheduled = false;
     final text = widget._text;
     if (text != null) {
       _consume(text);
@@ -163,14 +170,28 @@ class _StreamdownState extends State<Streamdown> {
   }
 
   void _consume(String chunk) {
-    _parser.feed(_tokenizer.feed(chunk));
-    if (mounted) setState(() {});
+    _accumulatedBuffer += chunk;
+    if (widget.parseIncompleteMarkdown) {
+      final healed = remend(_accumulatedBuffer, widget.remendOptions);
+      if (healed != _accumulatedBuffer) {
+        _tokenizer = Tokenizer();
+        _parser = Parser();
+        _lastProcessedLength = 0;
+      }
+      final suffix = healed.substring(_lastProcessedLength);
+      _lastProcessedLength = healed.length;
+      _parser.feed(_tokenizer.feed(suffix));
+    } else {
+      _parser.feed(_tokenizer.feed(chunk));
+    }
+    if (mounted) _scheduleRebuild();
   }
 
   void _completeStream() {
     _parser.feed(_tokenizer.complete());
     _parser.complete();
-    if (mounted) setState(() {});
+    _streamActive = false;
+    if (mounted) _scheduleRebuild();
   }
 
   @override
@@ -178,6 +199,9 @@ class _StreamdownState extends State<Streamdown> {
     if (_streamError != null && widget.errorBuilder != null) {
       return widget.errorBuilder!(context, _streamError!, _streamStack);
     }
+    final animateConfig = widget.animateConfig ??
+        (widget.animated ? const AnimateConfig() : null);
+
     final renderer = AstRenderer(
       document: _parser.document,
       textStyle: widget.textStyle,
@@ -185,6 +209,11 @@ class _StreamdownState extends State<Streamdown> {
       syntaxTheme: widget.syntaxTheme ?? SyntaxTheme.auto(context),
       codeBlockBuilder: widget.codeBlockBuilder,
       latex: widget.latex,
+      cjk: widget.cjk,
+      lineNumbers: widget.lineNumbers,
+      animated: widget.animated && _streamActive,
+      showCaret: widget.showCaret && _streamActive,
+      animateConfig: _streamActive ? animateConfig : null,
     );
     final padded = widget.padding != null
         ? Padding(padding: widget.padding!, child: renderer)
