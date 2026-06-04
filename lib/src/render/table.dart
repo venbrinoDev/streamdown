@@ -270,7 +270,7 @@ class _Cell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final spans = buildInlineSpans(
+    final result = buildInlineSpans(
       text,
       context,
       baseStyle: baseStyle,
@@ -281,7 +281,7 @@ class _Cell extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       child: Text.rich(
-        TextSpan(children: spans),
+        TextSpan(children: result.spans),
         textAlign: _textAlign(alignment),
       ),
     );

@@ -97,8 +97,8 @@ List<String> _splitByWord(String text) {
   final parts = <String>[];
   var buf = StringBuffer();
   var inWs = false;
-  for (var i = 0; i < text.length; i++) {
-    final ch = text[i];
+  for (final rune in text.runes) {
+    final ch = String.fromCharCode(rune);
     final isWs = ch == ' ' || ch == '\t' || ch == '\n';
     if (isWs != inWs && buf.isNotEmpty) {
       parts.add(buf.toString());
@@ -114,8 +114,8 @@ List<String> _splitByWord(String text) {
 List<String> _splitByChar(String text) {
   final parts = <String>[];
   var wsBuf = StringBuffer();
-  for (var i = 0; i < text.length; i++) {
-    final ch = text[i];
+  for (final rune in text.runes) {
+    final ch = String.fromCharCode(rune);
     if (ch == ' ' || ch == '\t' || ch == '\n') {
       wsBuf.write(ch);
     } else {
@@ -162,7 +162,7 @@ class _StreamdownAnimatedBlockState extends State<StreamdownAnimatedBlock>
   @override
   void didUpdateWidget(covariant StreamdownAnimatedBlock oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.key != oldWidget.key) {
+    if (widget.key != oldWidget.key || widget.enabled != oldWidget.enabled) {
       _animate = widget.enabled;
     }
   }

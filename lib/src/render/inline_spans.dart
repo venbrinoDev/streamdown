@@ -12,8 +12,9 @@ import '../parser/inline_tokenizer.dart';
 import '../parser/token.dart';
 import 'animation.dart';
 
-/// Tokenize [text] and return the corresponding [InlineSpan]s.
-List<InlineSpan> buildInlineSpans(
+/// Tokenize [text] and return the corresponding [InlineSpan]s plus the
+/// rendered visible-text length used for streaming animation bookkeeping.
+({List<InlineSpan> spans, int renderedLength}) buildInlineSpans(
   String text,
   BuildContext context, {
   TextStyle? baseStyle,
@@ -66,9 +67,11 @@ List<InlineSpan> buildInlineSpans(
   }
 
   final spans = <InlineSpan>[];
+  var renderedLength = 0;
   for (final token in tokens) {
     switch (token) {
       case InlineTextToken(:final text):
+        renderedLength += text.length;
         charOffset = buildAnimatedSpans(
           text,
           styleNow(),
@@ -85,6 +88,7 @@ List<InlineSpan> buildInlineSpans(
       case StrikeDelimToken():
         if (strike > 0) { strike--; } else { strike++; }
       case CodeSpanToken(:final content):
+        renderedLength += content.length;
         spans.add(TextSpan(text: content, style: codeSpanStyle()));
       case LinkToken(:final text, :final url, :final isImage):
         if (isImage) {
@@ -115,6 +119,7 @@ List<InlineSpan> buildInlineSpans(
             ),
           );
         } else {
+          renderedLength += text.length;
           spans.add(
             TextSpan(
               text: text,
@@ -124,6 +129,7 @@ List<InlineSpan> buildInlineSpans(
           );
         }
       case AutolinkToken(:final url):
+        renderedLength += url.length;
         spans.add(
           TextSpan(
             text: url,
@@ -132,6 +138,7 @@ List<InlineSpan> buildInlineSpans(
           ),
         );
       case HardBreakToken():
+        renderedLength += 1;
         spans.add(const TextSpan(text: '\n'));
       case MathToken(:final tex, :final isBlock):
         spans.add(
@@ -162,5 +169,5 @@ List<InlineSpan> buildInlineSpans(
         break;
     }
   }
-  return spans;
+  return (spans: spans, renderedLength: renderedLength);
 }

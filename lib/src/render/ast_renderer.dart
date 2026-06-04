@@ -169,6 +169,12 @@ class _HeadingState extends State<_Heading> {
   int _lastTextLength = 0;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _cached = null;
+  }
+
+  @override
   void dispose() {
     for (final r in _recognizers) {
       r.dispose();
@@ -200,24 +206,22 @@ class _HeadingState extends State<_Heading> {
     };
     final merged = (widget.baseStyle ?? const TextStyle()).merge(headingStyle);
 
-    final result = Text.rich(
-      TextSpan(
-        children: buildInlineSpans(
-          widget.node.text,
-          context,
-          baseStyle: merged,
-          onLinkTap: widget.onLinkTap,
-          recognizers: _recognizers,
-          latex: widget.latex,
-          cjk: widget.cjk,
-          animateConfig: widget.animateConfig,
-          streaming: widget.streaming,
-          prevContentLength: _lastTextLength,
-        ),
-      ),
+    final (:spans, :renderedLength) = buildInlineSpans(
+      widget.node.text,
+      context,
+      baseStyle: merged,
+      onLinkTap: widget.onLinkTap,
+      recognizers: _recognizers,
+      latex: widget.latex,
+      cjk: widget.cjk,
+      animateConfig: widget.animateConfig,
+      streaming: widget.streaming,
+      prevContentLength: _lastTextLength,
     );
 
-    _lastTextLength = widget.node.text.length;
+    final result = Text.rich(TextSpan(children: spans));
+
+    _lastTextLength = renderedLength;
 
     if (widget.node.isComplete) {
       _cached = result;
@@ -257,6 +261,12 @@ class _ParagraphState extends State<_Paragraph> {
   int _lastTextLength = 0;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _cached = null;
+  }
+
+  @override
   void dispose() {
     for (final r in _recognizers) {
       r.dispose();
@@ -276,24 +286,22 @@ class _ParagraphState extends State<_Paragraph> {
     }
     _recognizers.clear();
 
-    final result = Text.rich(
-      TextSpan(
-        children: buildInlineSpans(
-          widget.node.text,
-          context,
-          baseStyle: widget.baseStyle,
-          onLinkTap: widget.onLinkTap,
-          recognizers: _recognizers,
-          latex: widget.latex,
-          cjk: widget.cjk,
-          animateConfig: widget.animateConfig,
-          streaming: widget.streaming,
-          prevContentLength: _lastTextLength,
-        ),
-      ),
+    final (:spans, :renderedLength) = buildInlineSpans(
+      widget.node.text,
+      context,
+      baseStyle: widget.baseStyle,
+      onLinkTap: widget.onLinkTap,
+      recognizers: _recognizers,
+      latex: widget.latex,
+      cjk: widget.cjk,
+      animateConfig: widget.animateConfig,
+      streaming: widget.streaming,
+      prevContentLength: _lastTextLength,
     );
 
-    _lastTextLength = widget.node.text.length;
+    final result = Text.rich(TextSpan(children: spans));
+
+    _lastTextLength = renderedLength;
 
     if (widget.node.isComplete) {
       _cached = result;

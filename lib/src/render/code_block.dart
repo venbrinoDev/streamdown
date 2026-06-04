@@ -38,6 +38,12 @@ class _CodeBlockWidgetState extends State<CodeBlockWidget> {
   Widget? _cached;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _cached = null;
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (widget.node.isComplete && _cached != null) {
       return _cached!;
