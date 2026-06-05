@@ -175,6 +175,19 @@ class _HeadingState extends State<_Heading> {
   }
 
   @override
+  void didUpdateWidget(covariant _Heading oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.baseStyle != oldWidget.baseStyle ||
+        widget.onLinkTap != oldWidget.onLinkTap ||
+        widget.animateConfig != oldWidget.animateConfig ||
+        widget.streaming != oldWidget.streaming ||
+        widget.latex != oldWidget.latex ||
+        widget.cjk != oldWidget.cjk) {
+      _cached = null;
+    }
+  }
+
+  @override
   void dispose() {
     for (final r in _recognizers) {
       r.dispose();
@@ -264,6 +277,19 @@ class _ParagraphState extends State<_Paragraph> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _cached = null;
+  }
+
+  @override
+  void didUpdateWidget(covariant _Paragraph oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.baseStyle != oldWidget.baseStyle ||
+        widget.onLinkTap != oldWidget.onLinkTap ||
+        widget.animateConfig != oldWidget.animateConfig ||
+        widget.streaming != oldWidget.streaming ||
+        widget.latex != oldWidget.latex ||
+        widget.cjk != oldWidget.cjk) {
+      _cached = null;
+    }
   }
 
   @override

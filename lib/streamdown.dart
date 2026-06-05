@@ -9,9 +9,8 @@ library;
 
 export 'src/render/streamdown_widget.dart' show Streamdown;
 export 'src/render/syntax_theme.dart' show CodeBlockBuilder, SyntaxTheme;
-export 'src/parser/remend.dart' show RemendOptions, RemendLinkMode, RemendHandler;
-export 'src/render/table.dart' show
-  tableDataToCSV,
-  tableDataToTSV,
-  tableDataToMarkdown;
-export 'src/render/animation.dart' show AnimateConfig;
+export 'src/parser/remend.dart'
+    show RemendOptions, RemendLinkMode, RemendHandler;
+export 'src/render/table.dart'
+    show tableDataToCSV, tableDataToTSV, tableDataToMarkdown;
+export 'src/render/animation.dart' show AnimateConfig, AnimationType;

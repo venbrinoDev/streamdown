@@ -7,16 +7,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+/// Mirrors React's AnimateOptions.animation.
+enum AnimationType { fadeIn, blurIn, slideUp }
+
 /// Mirrors React's AnimateOptions.
 class AnimateConfig {
   const AnimateConfig({
-    this.animation = 'fadeIn',
+    this.animation = AnimationType.fadeIn,
     this.duration = 150,
     this.sep = 'word',
     this.stagger = 40,
   });
 
-  final String animation;
+  final AnimationType animation;
   final int duration;
   final String sep;
   final int stagger;
@@ -25,20 +28,18 @@ class AnimateConfig {
     final d = Duration(milliseconds: duration);
     final delay = Duration(milliseconds: delayMs.round());
     switch (animation) {
-      case 'blurIn':
+      case AnimationType.blurIn:
         return [
           BlurEffect(begin: const Offset(0, 6), end: Offset.zero, delay: delay),
           FadeEffect(begin: 0, end: 1, duration: d, delay: delay),
         ];
-      case 'slideUp':
+      case AnimationType.slideUp:
         return [
           MoveEffect(begin: const Offset(0, 8), end: Offset.zero, delay: delay),
           FadeEffect(begin: 0, end: 1, duration: d, delay: delay),
         ];
-      default: // fadeIn
-        return [
-          FadeEffect(begin: 0, end: 1, duration: d, delay: delay),
-        ];
+      case AnimationType.fadeIn:
+        return [FadeEffect(begin: 0, end: 1, duration: d, delay: delay)];
     }
   }
 }
@@ -63,15 +64,18 @@ int buildAnimatedSpans(
 
   final parts = config.sep == 'char' ? _splitByChar(text) : _splitByWord(text);
   var local = 0;
+  var newContentOffset = 0;
 
   for (final part in parts) {
     final pos = charOffset + local;
     final skip = prevContentLength > 0 && pos < prevContentLength;
-    final delayMs = skip ? 0 : local * config.stagger;
 
     if (part.trim().isEmpty) {
       out.add(TextSpan(text: part, style: style));
+    } else if (skip) {
+      out.add(TextSpan(text: part, style: style));
     } else {
+      final delayMs = newContentOffset * config.stagger;
       out.add(
         WidgetSpan(
           alignment: PlaceholderAlignment.baseline,
@@ -82,6 +86,7 @@ int buildAnimatedSpans(
           ),
         ),
       );
+      newContentOffset += part.length;
     }
     local += part.length;
   }
@@ -171,9 +176,9 @@ class _StreamdownAnimatedBlockState extends State<StreamdownAnimatedBlock>
   Widget build(BuildContext context) {
     if (!_animate) return widget.child;
     return widget.child.animate().fadeIn(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-        );
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+    );
   }
 }
 
@@ -207,10 +212,7 @@ class _StreamdownCaretState extends State<StreamdownCaret>
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _controller.drive(CurveTween(curve: Curves.easeInOut)),
-      child: Text(
-        ' ▋',
-        style: DefaultTextStyle.of(context).style,
-      ),
+      child: Text(' ▋', style: DefaultTextStyle.of(context).style),
     );
   }
 }

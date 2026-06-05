@@ -44,6 +44,16 @@ class _CodeBlockWidgetState extends State<CodeBlockWidget> {
   }
 
   @override
+  void didUpdateWidget(covariant CodeBlockWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.syntaxTheme != oldWidget.syntaxTheme ||
+        widget.builder != oldWidget.builder ||
+        widget.showLineNumbers != oldWidget.showLineNumbers) {
+      _cached = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (widget.node.isComplete && _cached != null) {
       return _cached!;
