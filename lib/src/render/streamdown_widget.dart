@@ -100,6 +100,7 @@ class _StreamdownState extends State<Streamdown> {
   StackTrace? _streamStack;
   String _accumulatedBuffer = '';
   int _lastProcessedLength = 0;
+  int _renderGeneration = 0;
   bool _streamActive = false;
   bool _rebuildScheduled = false;
 
@@ -138,6 +139,7 @@ class _StreamdownState extends State<Streamdown> {
   void _initPipeline() {
     _tokenizer = Tokenizer();
     _parser = Parser();
+    _renderGeneration += 1;
     _streamError = null;
     _streamStack = null;
     _accumulatedBuffer = '';
@@ -199,11 +201,13 @@ class _StreamdownState extends State<Streamdown> {
     if (_streamError != null && widget.errorBuilder != null) {
       return widget.errorBuilder!(context, _streamError!, _streamStack);
     }
-    final animateConfig = widget.animateConfig ??
+    final animateConfig =
+        widget.animateConfig ??
         (widget.animated ? const AnimateConfig() : null);
 
     final renderer = AstRenderer(
       document: _parser.document,
+      keySeed: _renderGeneration,
       textStyle: widget.textStyle,
       onLinkTap: widget.onLinkTap,
       syntaxTheme: widget.syntaxTheme ?? SyntaxTheme.auto(context),

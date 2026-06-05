@@ -182,6 +182,18 @@ void main() {
   });
 
   group('Streamdown — streaming stability', () {
+    testWidgets('static text replacement does not reuse cached block output', (
+      tester,
+    ) async {
+      await pumpStatic(tester, 'first paragraph\n');
+      expect(find.textContaining('first paragraph'), findsWidgets);
+
+      await pumpStatic(tester, 'second paragraph\n');
+
+      expect(find.textContaining('second paragraph'), findsWidgets);
+      expect(find.textContaining('first paragraph'), findsNothing);
+    });
+
     testWidgets(
       'closed widgets persist across chunk feeds (no element churn)',
       (tester) async {

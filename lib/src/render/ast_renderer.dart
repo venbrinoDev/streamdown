@@ -19,6 +19,7 @@ class AstRenderer extends StatefulWidget {
     super.key,
     required this.document,
     required this.syntaxTheme,
+    required this.keySeed,
     this.textStyle,
     this.onLinkTap,
     this.codeBlockBuilder,
@@ -31,6 +32,7 @@ class AstRenderer extends StatefulWidget {
   });
 
   final DocumentNode document;
+  final int keySeed;
   final TextStyle? textStyle;
   final void Function(Uri uri)? onLinkTap;
   final SyntaxTheme syntaxTheme;
@@ -56,7 +58,7 @@ class _AstRendererState extends State<AstRenderer> {
       children: [
         for (final node in widget.document.children)
           StreamdownAnimatedBlock(
-            key: ValueKey<int>(node.id),
+            key: _nodeKey(node),
             enabled: widget.animated && !node.isComplete,
             child: _renderBlock(context, node),
           ),
@@ -68,7 +70,7 @@ class _AstRendererState extends State<AstRenderer> {
   Widget _renderBlock(BuildContext context, AstNode node) {
     return switch (node) {
       HeadingNode() => _Heading(
-        key: ValueKey<int>(node.id),
+        key: _nodeKey(node),
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
@@ -76,9 +78,10 @@ class _AstRendererState extends State<AstRenderer> {
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
         streaming: widget.animateConfig != null,
+        keySeed: widget.keySeed,
       ),
       ParagraphNode() => _Paragraph(
-        key: ValueKey<int>(node.id),
+        key: _nodeKey(node),
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
@@ -86,9 +89,10 @@ class _AstRendererState extends State<AstRenderer> {
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
         streaming: widget.animateConfig != null,
+        keySeed: widget.keySeed,
       ),
       HorizontalRuleNode() => Padding(
-        key: ValueKey<int>(node.id),
+        key: _nodeKey(node),
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Divider(
           color: Theme.of(context).colorScheme.outlineVariant,
@@ -96,7 +100,7 @@ class _AstRendererState extends State<AstRenderer> {
         ),
       ),
       BlockquoteNode() => _Blockquote(
-        key: ValueKey<int>(node.id),
+        key: _nodeKey(node),
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
@@ -104,9 +108,10 @@ class _AstRendererState extends State<AstRenderer> {
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
         streaming: widget.animateConfig != null,
+        keySeed: widget.keySeed,
       ),
       ListNode() => _List(
-        key: ValueKey<int>(node.id),
+        key: _nodeKey(node),
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
@@ -114,25 +119,28 @@ class _AstRendererState extends State<AstRenderer> {
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
         streaming: widget.animateConfig != null,
+        keySeed: widget.keySeed,
       ),
       CodeBlockNode() => CodeBlockWidget(
-        key: ValueKey<int>(node.id),
+        key: _nodeKey(node),
         node: node,
         syntaxTheme: widget.syntaxTheme,
         builder: widget.codeBlockBuilder,
         showLineNumbers: widget.lineNumbers,
       ),
       TableNode() => table_widget.TableWidget(
-        key: ValueKey<int>(node.id),
+        key: _nodeKey(node),
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
         latex: widget.latex,
       ),
-      DocumentNode() || ListItemNode() =>
-        const SizedBox.shrink(),
+      DocumentNode() || ListItemNode() => const SizedBox.shrink(),
     };
   }
+
+  ValueKey<String> _nodeKey(AstNode node) =>
+      ValueKey<String>('${widget.keySeed}:${node.id}');
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -149,6 +157,7 @@ class _Heading extends StatefulWidget {
     this.cjk = false,
     this.animateConfig,
     this.streaming = false,
+    required this.keySeed,
   });
 
   final HeadingNode node;
@@ -158,6 +167,7 @@ class _Heading extends StatefulWidget {
   final bool cjk;
   final AnimateConfig? animateConfig;
   final bool streaming;
+  final int keySeed;
 
   @override
   State<_Heading> createState() => _HeadingState();
@@ -254,6 +264,7 @@ class _Paragraph extends StatefulWidget {
     this.cjk = false,
     this.animateConfig,
     this.streaming = false,
+    required this.keySeed,
   });
 
   final ParagraphNode node;
@@ -263,6 +274,7 @@ class _Paragraph extends StatefulWidget {
   final bool cjk;
   final AnimateConfig? animateConfig;
   final bool streaming;
+  final int keySeed;
 
   @override
   State<_Paragraph> createState() => _ParagraphState();
@@ -347,6 +359,7 @@ class _Blockquote extends StatelessWidget {
     this.cjk = false,
     this.animateConfig,
     this.streaming = false,
+    required this.keySeed,
   });
 
   final BlockquoteNode node;
@@ -356,6 +369,7 @@ class _Blockquote extends StatelessWidget {
   final bool cjk;
   final AnimateConfig? animateConfig;
   final bool streaming;
+  final int keySeed;
 
   @override
   Widget build(BuildContext context) {
@@ -379,7 +393,7 @@ class _Blockquote extends StatelessWidget {
   Widget _renderInner(BuildContext context, AstNode child) {
     return switch (child) {
       ParagraphNode() => _Paragraph(
-        key: ValueKey<int>(child.id),
+        key: _nodeKey(child),
         node: child,
         baseStyle: baseStyle,
         onLinkTap: onLinkTap,
@@ -387,9 +401,10 @@ class _Blockquote extends StatelessWidget {
         cjk: cjk,
         animateConfig: animateConfig,
         streaming: streaming,
+        keySeed: keySeed,
       ),
       HeadingNode() => _Heading(
-        key: ValueKey<int>(child.id),
+        key: _nodeKey(child),
         node: child,
         baseStyle: baseStyle,
         onLinkTap: onLinkTap,
@@ -397,10 +412,14 @@ class _Blockquote extends StatelessWidget {
         cjk: cjk,
         animateConfig: animateConfig,
         streaming: streaming,
+        keySeed: keySeed,
       ),
       _ => const SizedBox.shrink(),
     };
   }
+
+  ValueKey<String> _nodeKey(AstNode node) =>
+      ValueKey<String>('$keySeed:${node.id}');
 }
 
 class _List extends StatelessWidget {
@@ -413,6 +432,7 @@ class _List extends StatelessWidget {
     this.cjk = false,
     this.animateConfig,
     this.streaming = false,
+    required this.keySeed,
   });
 
   final ListNode node;
@@ -422,6 +442,7 @@ class _List extends StatelessWidget {
   final bool cjk;
   final AnimateConfig? animateConfig;
   final bool streaming;
+  final int keySeed;
 
   @override
   Widget build(BuildContext context) {
@@ -433,7 +454,7 @@ class _List extends StatelessWidget {
       children: <Widget>[
         for (var i = 0; i < node.items.length; i++)
           _ListItem(
-            key: ValueKey<int>(node.items[i].id),
+            key: _nodeKey(node.items[i]),
             node: node.items[i],
             marker: _markerFor(node, i, start),
             baseStyle: baseStyle,
@@ -442,6 +463,7 @@ class _List extends StatelessWidget {
             cjk: cjk,
             animateConfig: animateConfig,
             streaming: streaming,
+            keySeed: keySeed,
           ),
       ],
     );
@@ -454,6 +476,9 @@ class _List extends StatelessWidget {
     }
     return list.ordered ? '${start + index}.' : '•';
   }
+
+  ValueKey<String> _nodeKey(AstNode node) =>
+      ValueKey<String>('$keySeed:${node.id}');
 }
 
 class _ListItem extends StatelessWidget {
@@ -467,6 +492,7 @@ class _ListItem extends StatelessWidget {
     this.cjk = false,
     this.animateConfig,
     this.streaming = false,
+    required this.keySeed,
   });
 
   final ListItemNode node;
@@ -477,6 +503,7 @@ class _ListItem extends StatelessWidget {
   final bool cjk;
   final AnimateConfig? animateConfig;
   final bool streaming;
+  final int keySeed;
 
   @override
   Widget build(BuildContext context) {
@@ -494,7 +521,7 @@ class _ListItem extends StatelessWidget {
               for (final child in node.children)
                 if (child is ParagraphNode)
                   _Paragraph(
-                    key: ValueKey<int>(child.id),
+                    key: _nodeKey(child),
                     node: child,
                     baseStyle: baseStyle,
                     onLinkTap: onLinkTap,
@@ -502,6 +529,7 @@ class _ListItem extends StatelessWidget {
                     cjk: cjk,
                     animateConfig: animateConfig,
                     streaming: streaming,
+                    keySeed: keySeed,
                   )
                 else
                   const SizedBox.shrink(),
@@ -511,4 +539,7 @@ class _ListItem extends StatelessWidget {
       ],
     );
   }
+
+  ValueKey<String> _nodeKey(AstNode node) =>
+      ValueKey<String>('$keySeed:${node.id}');
 }
