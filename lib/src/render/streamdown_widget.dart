@@ -99,7 +99,6 @@ class _StreamdownState extends State<Streamdown> {
   Object? _streamError;
   StackTrace? _streamStack;
   String _accumulatedBuffer = '';
-  int _lastProcessedLength = 0;
   int _renderGeneration = 0;
   bool _streamActive = false;
   bool _rebuildScheduled = false;
@@ -143,7 +142,6 @@ class _StreamdownState extends State<Streamdown> {
     _streamError = null;
     _streamStack = null;
     _accumulatedBuffer = '';
-    _lastProcessedLength = 0;
     _streamActive = true;
     _rebuildScheduled = false;
     final text = widget._text;
@@ -175,14 +173,10 @@ class _StreamdownState extends State<Streamdown> {
     _accumulatedBuffer += chunk;
     if (widget.parseIncompleteMarkdown) {
       final healed = remend(_accumulatedBuffer, widget.remendOptions);
-      if (healed != _accumulatedBuffer) {
-        _tokenizer = Tokenizer();
-        _parser = Parser();
-        _lastProcessedLength = 0;
-      }
-      final suffix = healed.substring(_lastProcessedLength);
-      _lastProcessedLength = healed.length;
-      _parser.feed(_tokenizer.feed(suffix));
+      _tokenizer = Tokenizer();
+      _parser = Parser();
+      _parser.feed(_tokenizer.feed(healed));
+      _parser.feed(_tokenizer.complete());
     } else {
       _parser.feed(_tokenizer.feed(chunk));
     }

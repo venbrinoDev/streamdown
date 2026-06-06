@@ -255,5 +255,62 @@ void main() {
       await tester.pump();
       expect(find.textContaining('hello world'), findsWidgets);
     });
+
+    testWidgets('parseIncompleteMarkdown renders a partial trailing line', (
+      tester,
+    ) async {
+      final controller = StreamController<String>();
+      addTearDown(controller.close);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Streamdown(
+              stream: controller.stream,
+              parseIncompleteMarkdown: true,
+            ),
+          ),
+        ),
+      );
+
+      controller.add('hello while still streaming');
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        find.textContaining('hello while still streaming', findRichText: true),
+        findsWidgets,
+      );
+    });
+
+    testWidgets('remended inline markdown does not skip later real text', (
+      tester,
+    ) async {
+      final controller = StreamController<String>();
+      addTearDown(controller.close);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Streamdown(
+              stream: controller.stream,
+              parseIncompleteMarkdown: true,
+            ),
+          ),
+        ),
+      );
+
+      controller.add('a **bol');
+      await tester.pump();
+      await tester.pump();
+      expect(find.textContaining('a bol', findRichText: true), findsWidgets);
+
+      controller.add('d** after');
+      await tester.pump();
+      await tester.pump();
+
+      final richText = tester.widget<RichText>(find.byType(RichText).first);
+      expect(richText.text.toPlainText(), contains('a bold after'));
+    });
   });
 }
