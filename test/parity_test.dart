@@ -28,7 +28,9 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData.light(),
-          home: Scaffold(body: Streamdown(stream: controller.stream, animated: false)),
+          home: Scaffold(
+            body: Streamdown(stream: controller.stream, animated: false),
+          ),
         ),
       );
 
@@ -45,7 +47,9 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData.dark(),
-          home: Scaffold(body: Streamdown(stream: controller.stream, animated: false)),
+          home: Scaffold(
+            body: Streamdown(stream: controller.stream, animated: false),
+          ),
         ),
       );
       await tester.pump();
@@ -61,7 +65,9 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData.light(),
-          home: Scaffold(body: Streamdown(stream: controller.stream, animated: false)),
+          home: Scaffold(
+            body: Streamdown(stream: controller.stream, animated: false),
+          ),
         ),
       );
 
@@ -78,7 +84,9 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData.dark(),
-          home: Scaffold(body: Streamdown(stream: controller.stream, animated: false)),
+          home: Scaffold(
+            body: Streamdown(stream: controller.stream, animated: false),
+          ),
         ),
       );
       await tester.pump();
@@ -99,13 +107,19 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.textContaining('const a = 1;', findRichText: true), findsWidgets);
+      expect(
+        find.textContaining('const a = 1;', findRichText: true),
+        findsWidgets,
+      );
 
       controller.add('paragraph after\n');
       await tester.pump();
       await tester.pump();
 
-      expect(find.textContaining('const a = 1;', findRichText: true), findsWidgets);
+      expect(
+        find.textContaining('const a = 1;', findRichText: true),
+        findsWidgets,
+      );
     });
 
     testWidgets('open code block grows as more lines stream in', (
@@ -149,7 +163,7 @@ void main() {
               animated: true,
               animateConfig: const AnimateConfig(
                 animation: AnimationType.fadeIn,
-                sep: 'char',
+                sep: AnimationSeparator.char,
               ),
             ),
           ),
@@ -175,8 +189,9 @@ void main() {
             body: Streamdown(
               stream: controller.stream,
               animated: true,
-              animateConfig:
-                  const AnimateConfig(animation: AnimationType.fadeIn),
+              animateConfig: const AnimateConfig(
+                animation: AnimationType.fadeIn,
+              ),
             ),
           ),
         ),
@@ -198,7 +213,7 @@ void main() {
             body: Streamdown(
               stream: controller.stream,
               animated: true,
-              animateConfig: const AnimateConfig(sep: 'char'),
+              animateConfig: const AnimateConfig(sep: AnimationSeparator.char),
             ),
           ),
         ),
@@ -210,9 +225,7 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('block animation survives through re-renders', (
-      tester,
-    ) async {
+    testWidgets('block animation survives through re-renders', (tester) async {
       final controller = StreamController<String>();
       addTearDown(controller.close);
 

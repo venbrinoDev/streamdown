@@ -12,7 +12,7 @@ void main() {
       const config = AnimateConfig();
       expect(config.animation, AnimationType.fadeIn);
       expect(config.duration, 150);
-      expect(config.sep, 'word');
+      expect(config.sep, AnimationSeparator.word);
       expect(config.stagger, 40);
     });
 
@@ -122,7 +122,7 @@ void main() {
       buildAnimatedSpans(
         'ab c',
         _style,
-        config: const AnimateConfig(sep: 'char'),
+        config: const AnimateConfig(sep: AnimationSeparator.char),
         streaming: true,
         prevContentLength: 0,
         charOffset: 0,
@@ -141,7 +141,7 @@ void main() {
       var pos = buildAnimatedSpans(
         'ab',
         _style,
-        config: const AnimateConfig(sep: 'char'),
+        config: const AnimateConfig(sep: AnimationSeparator.char),
         streaming: true,
         prevContentLength: 0,
         charOffset: 0,
@@ -152,7 +152,7 @@ void main() {
       pos = buildAnimatedSpans(
         'cd',
         _style,
-        config: const AnimateConfig(sep: 'char'),
+        config: const AnimateConfig(sep: AnimationSeparator.char),
         streaming: true,
         prevContentLength: 0,
         charOffset: pos,
@@ -166,7 +166,7 @@ void main() {
       buildAnimatedSpans(
         'ab cd',
         _style,
-        config: const AnimateConfig(sep: 'char'),
+        config: const AnimateConfig(sep: AnimationSeparator.char),
         streaming: true,
         prevContentLength: 2,
         charOffset: 0,
@@ -222,7 +222,7 @@ void main() {
       buildAnimatedSpans(
         'a😊b',
         _style,
-        config: const AnimateConfig(sep: 'char'),
+        config: const AnimateConfig(sep: AnimationSeparator.char),
         streaming: true,
         prevContentLength: 0,
         charOffset: 0,
@@ -284,7 +284,7 @@ void main() {
       buildAnimatedSpans(
         'Hi',
         _style,
-        config: const AnimateConfig(sep: 'char'),
+        config: const AnimateConfig(sep: AnimationSeparator.char),
         streaming: true,
         prevContentLength: 0,
         charOffset: 0,

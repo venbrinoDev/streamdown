@@ -10,18 +10,21 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// Mirrors React's AnimateOptions.animation.
 enum AnimationType { fadeIn, blurIn, slideUp }
 
+/// Controls how streaming text is split for inline animation.
+enum AnimationSeparator { word, char }
+
 /// Mirrors React's AnimateOptions.
 class AnimateConfig {
   const AnimateConfig({
     this.animation = AnimationType.fadeIn,
     this.duration = 150,
-    this.sep = 'word',
+    this.sep = AnimationSeparator.word,
     this.stagger = 40,
   });
 
   final AnimationType animation;
   final int duration;
-  final String sep;
+  final AnimationSeparator sep;
   final int stagger;
 
   List<Effect<dynamic>> effects(double delayMs) {
@@ -62,7 +65,9 @@ int buildAnimatedSpans(
     return charOffset + text.length;
   }
 
-  final parts = config.sep == 'char' ? _splitByChar(text) : _splitByWord(text);
+  final parts = config.sep == AnimationSeparator.char
+      ? _splitByChar(text)
+      : _splitByWord(text);
   var local = 0;
   var newContentOffset = 0;
 

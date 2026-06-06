@@ -51,6 +51,7 @@ class AstRenderer extends StatefulWidget {
 class _AstRendererState extends State<AstRenderer> {
   @override
   Widget build(BuildContext context) {
+    final useBlockAnimation = widget.animated && widget.animateConfig == null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -59,7 +60,7 @@ class _AstRendererState extends State<AstRenderer> {
         for (final node in widget.document.children)
           StreamdownAnimatedBlock(
             key: _nodeKey(node),
-            enabled: widget.animated && !node.isComplete,
+            enabled: useBlockAnimation && !node.isComplete,
             child: _renderBlock(context, node),
           ),
         if (widget.showCaret) const StreamdownCaret(),
@@ -187,6 +188,10 @@ class _HeadingState extends State<_Heading> {
   @override
   void didUpdateWidget(covariant _Heading oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final shouldResetAnimatedLength =
+        widget.streaming != oldWidget.streaming ||
+        widget.animateConfig != oldWidget.animateConfig ||
+        !widget.node.text.startsWith(oldWidget.node.text);
     if (widget.node != oldWidget.node ||
         widget.node.text != oldWidget.node.text ||
         widget.node.isComplete != oldWidget.node.isComplete ||
@@ -197,7 +202,9 @@ class _HeadingState extends State<_Heading> {
         widget.latex != oldWidget.latex ||
         widget.cjk != oldWidget.cjk) {
       _cached = null;
-      _lastTextLength = 0;
+      if (shouldResetAnimatedLength) {
+        _lastTextLength = 0;
+      }
     }
   }
 
@@ -298,6 +305,10 @@ class _ParagraphState extends State<_Paragraph> {
   @override
   void didUpdateWidget(covariant _Paragraph oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final shouldResetAnimatedLength =
+        widget.streaming != oldWidget.streaming ||
+        widget.animateConfig != oldWidget.animateConfig ||
+        !widget.node.text.startsWith(oldWidget.node.text);
     if (widget.node != oldWidget.node ||
         widget.node.text != oldWidget.node.text ||
         widget.node.isComplete != oldWidget.node.isComplete ||
@@ -308,7 +319,9 @@ class _ParagraphState extends State<_Paragraph> {
         widget.latex != oldWidget.latex ||
         widget.cjk != oldWidget.cjk) {
       _cached = null;
-      _lastTextLength = 0;
+      if (shouldResetAnimatedLength) {
+        _lastTextLength = 0;
+      }
     }
   }
 

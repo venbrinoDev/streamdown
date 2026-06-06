@@ -77,8 +77,8 @@ Streamdown(
   animated: true,                         // Fade in new text word-by-word
   showCaret: true,                        // Blinking cursor at end of stream
   animateConfig: AnimateConfig(            // Optional: tune the animation
-    animation: 'fadeIn',  // 'fadeIn' | 'blurIn' | 'slideUp'
-    sep: 'word',          // 'word' | 'char'
+    animation: AnimationType.fadeIn,
+    sep: AnimationSeparator.word,
     duration: 150,        // ms per element
     stagger: 40,          // ms between elements
   ),

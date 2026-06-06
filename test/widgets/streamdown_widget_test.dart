@@ -312,5 +312,62 @@ void main() {
       final richText = tester.widget<RichText>(find.byType(RichText).first);
       expect(richText.text.toPlainText(), contains('a bold after'));
     });
+
+    testWidgets(
+      'animated stream only animates newly appended words after reparse',
+      (tester) async {
+        final controller = StreamController<String>();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Streamdown(
+                stream: controller.stream,
+                parseIncompleteMarkdown: true,
+                animated: true,
+                animateConfig: const AnimateConfig(stagger: 0),
+              ),
+            ),
+          ),
+        );
+
+        controller.add('hello');
+        await tester.pump();
+        await tester.pump();
+
+        expect(_widgetSpanCount(tester), 1);
+
+        controller.add(' world');
+        await tester.pump();
+        await tester.pump();
+
+        expect(
+          _widgetSpanCount(tester),
+          1,
+          reason: 'the existing "hello" span should not animate again',
+        );
+
+        unawaited(controller.close());
+        await tester.pump();
+        await tester.pumpAndSettle();
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpAndSettle();
+      },
+    );
   });
+}
+
+int _widgetSpanCount(WidgetTester tester) {
+  final richText = tester.widget<RichText>(find.byType(RichText).first);
+  return _countWidgetSpans(richText.text);
+}
+
+int _countWidgetSpans(InlineSpan span) {
+  var count = span is WidgetSpan ? 1 : 0;
+  if (span is TextSpan) {
+    for (final child in span.children ?? const <InlineSpan>[]) {
+      count += _countWidgetSpans(child);
+    }
+  }
+  return count;
 }

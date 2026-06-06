@@ -13,4 +13,5 @@ export 'src/parser/remend.dart'
     show RemendOptions, RemendLinkMode, RemendHandler;
 export 'src/render/table.dart'
     show tableDataToCSV, tableDataToTSV, tableDataToMarkdown;
-export 'src/render/animation.dart' show AnimateConfig, AnimationType;
+export 'src/render/animation.dart'
+    show AnimateConfig, AnimationSeparator, AnimationType;
