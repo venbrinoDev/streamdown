@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:streamdown/streamdown.dart';
+import 'package:streamdown/src/render/ast_renderer.dart';
 
 /// Pump a [Streamdown.text] inside a [MaterialApp] scaffold.
 Future<void> pumpStatic(
@@ -459,6 +460,109 @@ void main() {
       await tester.pumpAndSettle();
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();
+    });
+
+    testWidgets(
+      'PDF response reconciles provisional paragraphs into lists before completion',
+      (tester) async {
+        final controller = StreamController<String>();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 345,
+                child: Streamdown(
+                  stream: controller.stream,
+                  animated: true,
+                  parseIncompleteMarkdown: true,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        const chunks = <String>[
+          'Yes',
+          ' — I can',
+          ' create a PDF for you.\n\nSend me:\n-',
+          ' the text/content\n-',
+          ' any title or layout',
+          ' preference\n- if you want',
+          ' it from a file, upload it\n\nI can also turn a',
+          ' document into PDF if you want.',
+        ];
+
+        for (final chunk in chunks) {
+          controller.add(chunk);
+          await tester.pump();
+          await tester.pump();
+        }
+
+        expect(find.text('•', findRichText: true), findsNWidgets(3));
+        expect(
+          find.textContaining(
+            'any title or layout preference',
+            findRichText: true,
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining(
+            'if you want it from a file, upload it',
+            findRichText: true,
+          ),
+          findsOneWidget,
+        );
+
+        final rendererBeforeCompletion = tester.element(
+          find.byType(AstRenderer),
+        );
+        unawaited(controller.close());
+        await tester.pump();
+        await tester.pumpAndSettle();
+        expect(
+          identical(
+            rendererBeforeCompletion,
+            tester.element(find.byType(AstRenderer)),
+          ),
+          isTrue,
+          reason: 'completion must reconcile through the existing renderer',
+        );
+        expect(find.text('•', findRichText: true), findsNWidgets(3));
+      },
+    );
+
+    testWidgets('block type changes replace the keyed child immediately', (
+      tester,
+    ) async {
+      final controller = StreamController<String>();
+      addTearDown(controller.close);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Streamdown(
+              stream: controller.stream,
+              parseIncompleteMarkdown: true,
+            ),
+          ),
+        ),
+      );
+
+      controller.add('Send me:\n-');
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('•', findRichText: true), findsNothing);
+
+      controller.add(' the text/content');
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('•', findRichText: true), findsOneWidget);
+      expect(
+        find.textContaining('the text/content', findRichText: true),
+        findsOneWidget,
+      );
     });
   });
 }

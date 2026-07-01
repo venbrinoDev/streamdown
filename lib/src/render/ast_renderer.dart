@@ -1,8 +1,8 @@
 // AST → Flutter widget tree.
 //
-// Each AstNode becomes one widget keyed by `ValueKey(node.id)` so Flutter's
-// element diff never rebuilds closed nodes when new nodes are appended.
-// Uses ListView.builder for deferred off-screen rendering.
+// Top-level blocks are reconciled by stream generation, block index, and
+// runtime type. Parser node IDs restart whenever incomplete Markdown is
+// reparsed, so they are not valid identities across streaming snapshots.
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -57,22 +57,23 @@ class _AstRendererState extends State<AstRenderer> {
       mainAxisSize: MainAxisSize.min,
       spacing: 12,
       children: [
-        for (final node in widget.document.children)
+        for (final (index, node) in widget.document.children.indexed)
           StreamdownAnimatedBlock(
-            key: _nodeKey(node),
-            enabled: useBlockAnimation && !node.isComplete,
+            key: _blockKey(index, node),
+            enabled: useBlockAnimation,
             config: widget.animateConfig,
-            child: _renderBlock(context, node),
+            child: _renderBlock(context, index, node),
           ),
         if (widget.showCaret) const StreamdownCaret(),
       ],
     );
   }
 
-  Widget _renderBlock(BuildContext context, AstNode node) {
+  Widget _renderBlock(BuildContext context, int index, AstNode node) {
+    final key = _blockKey(index, node);
     return switch (node) {
       HeadingNode() => _Heading(
-        key: _nodeKey(node),
+        key: key,
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
@@ -83,7 +84,7 @@ class _AstRendererState extends State<AstRenderer> {
         keySeed: widget.keySeed,
       ),
       ParagraphNode() => _Paragraph(
-        key: _nodeKey(node),
+        key: key,
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
@@ -94,7 +95,7 @@ class _AstRendererState extends State<AstRenderer> {
         keySeed: widget.keySeed,
       ),
       HorizontalRuleNode() => Padding(
-        key: _nodeKey(node),
+        key: key,
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Divider(
           color: Theme.of(context).colorScheme.outlineVariant,
@@ -102,7 +103,7 @@ class _AstRendererState extends State<AstRenderer> {
         ),
       ),
       BlockquoteNode() => _Blockquote(
-        key: _nodeKey(node),
+        key: key,
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
@@ -113,7 +114,7 @@ class _AstRendererState extends State<AstRenderer> {
         keySeed: widget.keySeed,
       ),
       ListNode() => _List(
-        key: _nodeKey(node),
+        key: key,
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
@@ -124,14 +125,14 @@ class _AstRendererState extends State<AstRenderer> {
         keySeed: widget.keySeed,
       ),
       CodeBlockNode() => CodeBlockWidget(
-        key: _nodeKey(node),
+        key: key,
         node: node,
         syntaxTheme: widget.syntaxTheme,
         builder: widget.codeBlockBuilder,
         showLineNumbers: widget.lineNumbers,
       ),
       TableNode() => table_widget.TableWidget(
-        key: _nodeKey(node),
+        key: key,
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
@@ -141,8 +142,8 @@ class _AstRendererState extends State<AstRenderer> {
     };
   }
 
-  ValueKey<String> _nodeKey(AstNode node) =>
-      ValueKey<String>('${widget.keySeed}:${node.id}');
+  ValueKey<String> _blockKey(int index, AstNode node) =>
+      ValueKey<String>('${widget.keySeed}:block:$index:${node.runtimeType}');
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -193,8 +194,7 @@ class _HeadingState extends State<_Heading> {
         widget.streaming != oldWidget.streaming ||
         widget.animateConfig != oldWidget.animateConfig ||
         !widget.node.text.startsWith(oldWidget.node.text);
-    if (widget.node != oldWidget.node ||
-        widget.node.text != oldWidget.node.text ||
+    if (widget.node.text != oldWidget.node.text ||
         widget.node.isComplete != oldWidget.node.isComplete ||
         widget.baseStyle != oldWidget.baseStyle ||
         widget.onLinkTap != oldWidget.onLinkTap ||
@@ -310,8 +310,7 @@ class _ParagraphState extends State<_Paragraph> {
         widget.streaming != oldWidget.streaming ||
         widget.animateConfig != oldWidget.animateConfig ||
         !widget.node.text.startsWith(oldWidget.node.text);
-    if (widget.node != oldWidget.node ||
-        widget.node.text != oldWidget.node.text ||
+    if (widget.node.text != oldWidget.node.text ||
         widget.node.isComplete != oldWidget.node.isComplete ||
         widget.baseStyle != oldWidget.baseStyle ||
         widget.onLinkTap != oldWidget.onLinkTap ||
@@ -441,7 +440,7 @@ class _Blockquote extends StatelessWidget {
   }
 
   ValueKey<String> _nodeKey(AstNode node) =>
-      ValueKey<String>('$keySeed:${node.id}');
+      ValueKey<String>('$keySeed:${node.runtimeType}:${node.id}');
 }
 
 class _List extends StatelessWidget {
@@ -500,7 +499,7 @@ class _List extends StatelessWidget {
   }
 
   ValueKey<String> _nodeKey(AstNode node) =>
-      ValueKey<String>('$keySeed:${node.id}');
+      ValueKey<String>('$keySeed:${node.runtimeType}:${node.id}');
 }
 
 class _ListItem extends StatelessWidget {
@@ -563,5 +562,5 @@ class _ListItem extends StatelessWidget {
   }
 
   ValueKey<String> _nodeKey(AstNode node) =>
-      ValueKey<String>('$keySeed:${node.id}');
+      ValueKey<String>('$keySeed:${node.runtimeType}:${node.id}');
 }

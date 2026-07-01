@@ -184,6 +184,14 @@ class _StreamdownState extends State<Streamdown> {
   }
 
   void _completeStream() {
+    if (widget.parseIncompleteMarkdown) {
+      // The streaming snapshots are healed provisionally. Reconcile the final
+      // raw source through the same renderer instead of leaving synthetic
+      // remend characters in the completed document.
+      _tokenizer = Tokenizer();
+      _parser = Parser();
+      _parser.feed(_tokenizer.feed(_accumulatedBuffer));
+    }
     _parser.feed(_tokenizer.complete());
     _parser.complete();
     _streamActive = false;
