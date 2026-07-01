@@ -51,7 +51,7 @@ class AstRenderer extends StatefulWidget {
 class _AstRendererState extends State<AstRenderer> {
   @override
   Widget build(BuildContext context) {
-    final useBlockAnimation = widget.animated && widget.animateConfig == null;
+    final useBlockAnimation = widget.animated;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -61,6 +61,7 @@ class _AstRendererState extends State<AstRenderer> {
           StreamdownAnimatedBlock(
             key: _nodeKey(node),
             enabled: useBlockAnimation && !node.isComplete,
+            config: widget.animateConfig,
             child: _renderBlock(context, node),
           ),
         if (widget.showCaret) const StreamdownCaret(),

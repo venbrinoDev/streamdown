@@ -69,23 +69,21 @@ Streamdown(
 
 ### Animation
 
-Streaming text animates word-by-word or character-by-character, matching every new chunk with a smooth entrance:
+Streaming Markdown fades in at block level while prose remains continuous text with native Flutter line wrapping:
 
 ```dart
 Streamdown(
   stream: myStream,
-  animated: true,                         // Fade in new text word-by-word
+  animated: true,                         // Fade in the active Markdown block
   showCaret: true,                        // Blinking cursor at end of stream
   animateConfig: AnimateConfig(            // Optional: tune the animation
     animation: AnimationType.fadeIn,
-    sep: AnimationSeparator.word,
-    duration: 150,        // ms per element
-    stagger: 40,          // ms between elements
+    duration: 150,
   ),
 )
 ```
 
-Already-visible text never re-animates — only newly arrived characters receive effects. Code spans and links are skipped (they render instantly) matching React's behavior.
+`sep` and `stagger` remain accepted for source compatibility but are deprecated. Inline word widgets are intentionally avoided because they alter line breaking on narrow screens.
 
 ### Code blocks
 

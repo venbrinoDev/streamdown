@@ -1,8 +1,8 @@
-// Inline text animation matching React's animate.ts.
+// Streaming animation helpers.
 //
-// Splits text by word or char, wraps each segment in an Animate widget
-// with configurable stagger/duration/easing. Tracks prevContentLength
-// to skip re-animation of already-rendered text during streaming.
+// Prose must remain a continuous TextSpan run. Wrapping individual words in
+// WidgetSpans changes Flutter's line-breaking and produces fragmented chat
+// output on narrow screens. Animation therefore happens at block level.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -24,7 +24,14 @@ class AnimateConfig {
 
   final AnimationType animation;
   final int duration;
+
+  /// Retained for source compatibility. Inline word/character animation was
+  /// removed because WidgetSpan-based splitting breaks native text wrapping.
+  @Deprecated('Streaming animation is block-level; sep is no longer used.')
   final AnimationSeparator sep;
+
+  /// Retained for source compatibility. Block animation has no stagger.
+  @Deprecated('Streaming animation is block-level; stagger is no longer used.')
   final int stagger;
 
   List<Effect<dynamic>> effects(double delayMs) {
@@ -47,10 +54,10 @@ class AnimateConfig {
   }
 }
 
-/// Builds animated [InlineSpan]s for a plain-text run.
-/// [text] is the raw text content, [style] is the current text style.
-/// [charOffset] is the cumulative character position across all spans
-/// (used for stagger offset). Returns the new charOffset.
+/// Builds a native, continuous [TextSpan] for a plain-text run.
+///
+/// The animation-related arguments remain in the signature for compatibility
+/// with callers while animation is applied by [StreamdownAnimatedBlock].
 int buildAnimatedSpans(
   String text,
   TextStyle style, {
@@ -60,84 +67,8 @@ int buildAnimatedSpans(
   required int charOffset,
   required List<InlineSpan> out,
 }) {
-  if (config == null || !streaming) {
-    out.add(TextSpan(text: text, style: style));
-    return charOffset + text.length;
-  }
-
-  final parts = config.sep == AnimationSeparator.char
-      ? _splitByChar(text)
-      : _splitByWord(text);
-  var local = 0;
-  var newContentOffset = 0;
-
-  for (final part in parts) {
-    final pos = charOffset + local;
-    final skip = prevContentLength > 0 && pos < prevContentLength;
-
-    if (part.trim().isEmpty) {
-      out.add(TextSpan(text: part, style: style));
-    } else if (skip) {
-      out.add(TextSpan(text: part, style: style));
-    } else {
-      final delayMs = newContentOffset * config.stagger;
-      out.add(
-        WidgetSpan(
-          alignment: PlaceholderAlignment.baseline,
-          baseline: TextBaseline.alphabetic,
-          child: Animate(
-            effects: config.effects(delayMs.toDouble()),
-            child: Text(part, style: style),
-          ),
-        ),
-      );
-      newContentOffset += part.length;
-    }
-    local += part.length;
-  }
-
+  out.add(TextSpan(text: text, style: style));
   return charOffset + text.length;
-}
-
-// ──────────────────────────────────────────────────────────────────────────
-// Split utils (same algorithm as React's splitByWord / splitByChar)
-// ──────────────────────────────────────────────────────────────────────────
-
-List<String> _splitByWord(String text) {
-  final parts = <String>[];
-  var buf = StringBuffer();
-  var inWs = false;
-  for (final rune in text.runes) {
-    final ch = String.fromCharCode(rune);
-    final isWs = ch == ' ' || ch == '\t' || ch == '\n';
-    if (isWs != inWs && buf.isNotEmpty) {
-      parts.add(buf.toString());
-      buf = StringBuffer();
-    }
-    buf.write(ch);
-    inWs = isWs;
-  }
-  if (buf.isNotEmpty) parts.add(buf.toString());
-  return parts;
-}
-
-List<String> _splitByChar(String text) {
-  final parts = <String>[];
-  var wsBuf = StringBuffer();
-  for (final rune in text.runes) {
-    final ch = String.fromCharCode(rune);
-    if (ch == ' ' || ch == '\t' || ch == '\n') {
-      wsBuf.write(ch);
-    } else {
-      if (wsBuf.isNotEmpty) {
-        parts.add(wsBuf.toString());
-        wsBuf = StringBuffer();
-      }
-      parts.add(ch);
-    }
-  }
-  if (wsBuf.isNotEmpty) parts.add(wsBuf.toString());
-  return parts;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -149,10 +80,12 @@ class StreamdownAnimatedBlock extends StatefulWidget {
     super.key,
     required this.child,
     this.enabled = false,
+    this.config,
   });
 
   final Widget child;
   final bool enabled;
+  final AnimateConfig? config;
 
   @override
   State<StreamdownAnimatedBlock> createState() =>
@@ -180,10 +113,14 @@ class _StreamdownAnimatedBlockState extends State<StreamdownAnimatedBlock>
   @override
   Widget build(BuildContext context) {
     if (!_animate) return widget.child;
-    return widget.child.animate().fadeIn(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-    );
+    final config = widget.config;
+    if (config == null) {
+      return widget.child.animate().fadeIn(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+    }
+    return Animate(effects: config.effects(0), child: widget.child);
   }
 }
 

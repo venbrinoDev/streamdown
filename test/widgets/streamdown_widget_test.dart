@@ -314,7 +314,7 @@ void main() {
     });
 
     testWidgets(
-      'animated stream only animates newly appended words after reparse',
+      'animated stream keeps prose out of WidgetSpans after reparse',
       (tester) async {
         final controller = StreamController<String>();
 
@@ -335,7 +335,7 @@ void main() {
         await tester.pump();
         await tester.pump();
 
-        expect(_widgetSpanCount(tester), 1);
+        expect(_widgetSpanCount(tester), 0);
 
         controller.add(' world');
         await tester.pump();
@@ -343,8 +343,8 @@ void main() {
 
         expect(
           _widgetSpanCount(tester),
-          1,
-          reason: 'the existing "hello" span should not animate again',
+          0,
+          reason: 'ordinary prose must use native TextSpan layout',
         );
 
         unawaited(controller.close());
@@ -354,6 +354,112 @@ void main() {
         await tester.pumpAndSettle();
       },
     );
+
+    testWidgets(
+      'animated iPhone-width stream wraps identically before and after completion',
+      (tester) async {
+        final controller = StreamController<String>();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  width: 345,
+                  child: Streamdown(
+                    stream: controller.stream,
+                    parseIncompleteMarkdown: true,
+                    animated: true,
+                    animateConfig: const AnimateConfig(stagger: 18),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        controller.add('Sure — here’s a clean sam');
+        await tester.pump();
+        controller.add('ple CV you can use as a template.');
+        await tester.pump();
+        await tester.pump();
+
+        final streamingParagraph = tester.widget<RichText>(
+          find.byType(RichText).first,
+        );
+        final streamingHeight = tester
+            .getSize(find.byType(RichText).first)
+            .height;
+        expect(
+          streamingParagraph.text.toPlainText(),
+          'Sure — here’s a clean sample CV you can use as a template.',
+        );
+        expect(_countWidgetSpans(streamingParagraph.text), 0);
+
+        unawaited(controller.close());
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        final completedParagraph = tester.widget<RichText>(
+          find.byType(RichText).first,
+        );
+        final completedHeight = tester
+            .getSize(find.byType(RichText).first)
+            .height;
+        expect(
+          completedParagraph.text.toPlainText(),
+          streamingParagraph.text.toPlainText(),
+        );
+        expect(completedHeight, streamingHeight);
+        expect(_countWidgetSpans(completedParagraph.text), 0);
+      },
+    );
+
+    testWidgets('animated markdown preserves soft breaks, blocks, and lists', (
+      tester,
+    ) async {
+      final controller = StreamController<String>();
+      addTearDown(controller.close);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 345,
+              child: Streamdown(
+                stream: controller.stream,
+                animated: true,
+                animateConfig: const AnimateConfig(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      controller.add(
+        'A soft\nline with **bold** text.\n\n'
+        '1. Full name\n2. Phone number and email\n\n'
+        '- First skill\n- Second skill\n',
+      );
+      await tester.pump();
+      await tester.pump();
+
+      final prose = tester.widget<RichText>(find.byType(RichText).first);
+      expect(prose.text.toPlainText(), 'A soft line with bold text.');
+      for (final richText in tester.widgetList<RichText>(
+        find.byType(RichText),
+      )) {
+        expect(_countWidgetSpans(richText.text), 0);
+      }
+      expect(find.text('1.', findRichText: true), findsOneWidget);
+      expect(find.text('2.', findRichText: true), findsOneWidget);
+      expect(find.text('•', findRichText: true), findsNWidgets(2));
+
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    });
   });
 }
 

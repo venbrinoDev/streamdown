@@ -12,7 +12,9 @@ void main() {
       const config = AnimateConfig();
       expect(config.animation, AnimationType.fadeIn);
       expect(config.duration, 150);
+      // ignore: deprecated_member_use_from_same_package
       expect(config.sep, AnimationSeparator.word);
+      // ignore: deprecated_member_use_from_same_package
       expect(config.stagger, 40);
     });
 
@@ -95,7 +97,7 @@ void main() {
       expect(out.single, isA<TextSpan>());
     });
 
-    test('word split wraps each word in a WidgetSpan', () {
+    test('streaming prose remains one continuous TextSpan', () {
       final out = <InlineSpan>[];
       buildAnimatedSpans(
         'hello world',
@@ -106,18 +108,12 @@ void main() {
         charOffset: 0,
         out: out,
       );
-      // 3 parts: "hello", " ", "world"
-      expect(out.length, 3);
-      // space is plain TextSpan
-      expect(out[1], isA<TextSpan>());
-      // words are WidgetSpan wrapping Animate
-      final ws = out[0] as WidgetSpan;
-      expect(ws.child, isA<Animate>());
-      final ws2 = out[2] as WidgetSpan;
-      expect(ws2.child, isA<Animate>());
+      expect(out, hasLength(1));
+      expect(out.single, isA<TextSpan>());
+      expect((out.single as TextSpan).text, 'hello world');
     });
 
-    test('char split wraps each char in a WidgetSpan', () {
+    test('deprecated char separator does not fragment prose', () {
       final out = <InlineSpan>[];
       buildAnimatedSpans(
         'ab c',
@@ -128,12 +124,8 @@ void main() {
         charOffset: 0,
         out: out,
       );
-      // 'a', 'b', ' ', 'c' = 4 spans
-      expect(out.length, 4);
-      expect(out[0], isA<WidgetSpan>()); // 'a'
-      expect(out[1], isA<WidgetSpan>()); // 'b'
-      expect(out[2], isA<TextSpan>()); // ' '
-      expect(out[3], isA<WidgetSpan>()); // 'c'
+      expect(out, hasLength(1));
+      expect((out.single as TextSpan).text, 'ab c');
     });
 
     test('charOffset accumulates correctly', () {
@@ -161,7 +153,7 @@ void main() {
       expect(pos, 4);
     });
 
-    test('prevContentLength skips animation for already-rendered chars', () {
+    test('previous content length does not fragment the text run', () {
       final out = <InlineSpan>[];
       buildAnimatedSpans(
         'ab cd',
@@ -172,19 +164,11 @@ void main() {
         charOffset: 0,
         out: out,
       );
-      // 'a', 'b' (skipped), ' ', 'c', 'd' = 5 spans
-      // Skipped chars are plain TextSpan so existing text does not animate again.
-      for (var i = 0; i < out.length; i++) {
-        final span = out[i];
-        if (i < 2) {
-          expect(span, isA<TextSpan>());
-        } else if (i > 2) {
-          expect(span, isA<WidgetSpan>());
-        }
-      }
+      expect(out, hasLength(1));
+      expect((out.single as TextSpan).text, 'ab cd');
     });
 
-    test('new content after skipped prefix still animates', () {
+    test('new content after an existing prefix remains continuous', () {
       final out = <InlineSpan>[];
       buildAnimatedSpans(
         'old new words',
@@ -196,11 +180,8 @@ void main() {
         out: out,
       );
 
-      expect(out[0], isA<TextSpan>());
-      expect(out[1], isA<TextSpan>());
-      expect(out[2], isA<WidgetSpan>());
-      expect(out[3], isA<TextSpan>());
-      expect(out[4], isA<WidgetSpan>());
+      expect(out, hasLength(1));
+      expect((out.single as TextSpan).text, 'old new words');
     });
 
     test('all whitespace-only text gets plain TextSpan (no animation)', () {
@@ -228,15 +209,11 @@ void main() {
         charOffset: 0,
         out: out,
       );
-      // 😊 is a single code point (2 code units but 1 rune)
-      // Should be 3 WidgetSpans: 'a', '😊', 'b'
-      expect(out.length, 3);
-      expect(out[0], isA<WidgetSpan>());
-      expect(out[1], isA<WidgetSpan>());
-      expect(out[2], isA<WidgetSpan>());
+      expect(out, hasLength(1));
+      expect((out.single as TextSpan).text, 'a😊b');
     });
 
-    test('stagger applies incremental delay per word', () {
+    test('deprecated stagger does not fragment prose', () {
       final out = <InlineSpan>[];
       buildAnimatedSpans(
         'one two three',
@@ -247,50 +224,8 @@ void main() {
         charOffset: 0,
         out: out,
       );
-      // 5 parts: "one", " ", "two", " ", "three"
-      // Word 1 (index 0): local=0, delayMs=0*50=0
-      // Word 2 (index 2): local=4, delayMs=4*50=200
-      // Word 3 (index 4): local=8, delayMs=8*50=400
-      expect(out.length, 5);
-      // Words are WidgetSpan wrapping Animate
-      expect(out[0], isA<WidgetSpan>());
-      expect(out[2], isA<WidgetSpan>());
-      expect(out[4], isA<WidgetSpan>());
-      // Spaces are TextSpan
-      expect(out[1], isA<TextSpan>());
-      expect(out[3], isA<TextSpan>());
-    });
-  });
-
-  group('_splitByWord / _splitByChar', () {
-    // Indirectly tested via buildAnimatedSpans, but direct sanity checks:
-    test('splitByWord groups contiguous non-whitespace', () {
-      final out = <InlineSpan>[];
-      buildAnimatedSpans(
-        'hello   world',
-        _style,
-        config: const AnimateConfig(),
-        streaming: true,
-        prevContentLength: 0,
-        charOffset: 0,
-        out: out,
-      );
-      // "hello", "   ", "world" = 3 parts
-      expect(out.length, 3);
-    });
-
-    test('splitByChar separates each char', () {
-      final out = <InlineSpan>[];
-      buildAnimatedSpans(
-        'Hi',
-        _style,
-        config: const AnimateConfig(sep: AnimationSeparator.char),
-        streaming: true,
-        prevContentLength: 0,
-        charOffset: 0,
-        out: out,
-      );
-      expect(out.length, 2);
+      expect(out, hasLength(1));
+      expect((out.single as TextSpan).text, 'one two three');
     });
   });
 }
