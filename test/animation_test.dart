@@ -97,7 +97,7 @@ void main() {
       expect(out.single, isA<TextSpan>());
     });
 
-    test('streaming prose remains one continuous TextSpan', () {
+    test('streaming prose uses only native TextSpans', () {
       final out = <InlineSpan>[];
       buildAnimatedSpans(
         'hello world',
@@ -108,12 +108,14 @@ void main() {
         charOffset: 0,
         out: out,
       );
-      expect(out, hasLength(1));
-      expect(out.single, isA<TextSpan>());
-      expect((out.single as TextSpan).text, 'hello world');
+      expect(out.whereType<WidgetSpan>(), isEmpty);
+      expect(
+        out.whereType<TextSpan>().map((span) => span.text).join(),
+        'hello world',
+      );
     });
 
-    test('deprecated char separator does not fragment prose', () {
+    test('char separator keeps prose out of WidgetSpans', () {
       final out = <InlineSpan>[];
       buildAnimatedSpans(
         'ab c',
@@ -124,8 +126,8 @@ void main() {
         charOffset: 0,
         out: out,
       );
-      expect(out, hasLength(1));
-      expect((out.single as TextSpan).text, 'ab c');
+      expect(out.whereType<WidgetSpan>(), isEmpty);
+      expect(out.whereType<TextSpan>().map((span) => span.text).join(), 'ab c');
     });
 
     test('charOffset accumulates correctly', () {
@@ -153,7 +155,7 @@ void main() {
       expect(pos, 4);
     });
 
-    test('previous content length does not fragment the text run', () {
+    test('previous content and animated tail remain one paragraph run', () {
       final out = <InlineSpan>[];
       buildAnimatedSpans(
         'ab cd',
@@ -164,11 +166,14 @@ void main() {
         charOffset: 0,
         out: out,
       );
-      expect(out, hasLength(1));
-      expect((out.single as TextSpan).text, 'ab cd');
+      expect(out.whereType<WidgetSpan>(), isEmpty);
+      expect(
+        out.whereType<TextSpan>().map((span) => span.text).join(),
+        'ab cd',
+      );
     });
 
-    test('new content after an existing prefix remains continuous', () {
+    test('new content after an existing prefix remains native inline text', () {
       final out = <InlineSpan>[];
       buildAnimatedSpans(
         'old new words',
@@ -180,8 +185,32 @@ void main() {
         out: out,
       );
 
-      expect(out, hasLength(1));
-      expect((out.single as TextSpan).text, 'old new words');
+      expect(out.whereType<WidgetSpan>(), isEmpty);
+      expect(
+        out.whereType<TextSpan>().map((span) => span.text).join(),
+        'old new words',
+      );
+    });
+
+    test('only the appended tail starts transparent', () {
+      final out = <InlineSpan>[];
+      final coloredStyle = _style.copyWith(color: Colors.black);
+      buildAnimatedSpans(
+        'old new words',
+        coloredStyle,
+        config: const AnimateConfig(),
+        streaming: true,
+        prevContentLength: 4,
+        charOffset: 0,
+        out: out,
+        animationElapsedMs: 0,
+      );
+
+      final spans = out.whereType<TextSpan>().toList();
+      expect(spans.map((span) => span.text).join(), 'old new words');
+      expect(spans.first.style?.color?.a, coloredStyle.color?.a);
+      expect(spans[1].style?.color?.a, 0);
+      expect(out.whereType<WidgetSpan>(), isEmpty);
     });
 
     test('all whitespace-only text gets plain TextSpan (no animation)', () {
@@ -209,11 +238,11 @@ void main() {
         charOffset: 0,
         out: out,
       );
-      expect(out, hasLength(1));
-      expect((out.single as TextSpan).text, 'a😊b');
+      expect(out.whereType<WidgetSpan>(), isEmpty);
+      expect(out.whereType<TextSpan>().map((span) => span.text).join(), 'a😊b');
     });
 
-    test('deprecated stagger does not fragment prose', () {
+    test('stagger creates native inline spans without WidgetSpans', () {
       final out = <InlineSpan>[];
       buildAnimatedSpans(
         'one two three',
@@ -224,8 +253,11 @@ void main() {
         charOffset: 0,
         out: out,
       );
-      expect(out, hasLength(1));
-      expect((out.single as TextSpan).text, 'one two three');
+      expect(out.whereType<WidgetSpan>(), isEmpty);
+      expect(
+        out.whereType<TextSpan>().map((span) => span.text).join(),
+        'one two three',
+      );
     });
   });
 }

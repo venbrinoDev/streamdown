@@ -1,8 +1,8 @@
 // Streaming animation helpers.
 //
-// Prose must remain a continuous TextSpan run. Wrapping individual words in
-// WidgetSpans changes Flutter's line-breaking and produces fragmented chat
-// output on narrow screens. Animation therefore happens at block level.
+// Prose must remain a continuous TextSpan run. TextSpans participate in one
+// native paragraph layout; WidgetSpans do not and must never be used for
+// ordinary animated text.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -25,13 +25,8 @@ class AnimateConfig {
   final AnimationType animation;
   final int duration;
 
-  /// Retained for source compatibility. Inline word/character animation was
-  /// removed because WidgetSpan-based splitting breaks native text wrapping.
-  @Deprecated('Streaming animation is block-level; sep is no longer used.')
   final AnimationSeparator sep;
 
-  /// Retained for source compatibility. Block animation has no stagger.
-  @Deprecated('Streaming animation is block-level; stagger is no longer used.')
   final int stagger;
 
   List<Effect<dynamic>> effects(double delayMs) {
@@ -54,10 +49,8 @@ class AnimateConfig {
   }
 }
 
-/// Builds a native, continuous [TextSpan] for a plain-text run.
-///
-/// The animation-related arguments remain in the signature for compatibility
-/// with callers while animation is applied by [StreamdownAnimatedBlock].
+/// Builds native inline spans for a plain-text run. Splitting a RichText into
+/// TextSpans does not change Flutter's paragraph line breaking.
 int buildAnimatedSpans(
   String text,
   TextStyle style, {
@@ -66,10 +59,62 @@ int buildAnimatedSpans(
   required int prevContentLength,
   required int charOffset,
   required List<InlineSpan> out,
+  double animationElapsedMs = double.infinity,
+  int newSpanOffset = 0,
 }) {
-  out.add(TextSpan(text: text, style: style));
+  final oldLength = (prevContentLength - charOffset).clamp(0, text.length);
+  if (oldLength > 0) {
+    out.add(TextSpan(text: text.substring(0, oldLength), style: style));
+  }
+
+  final appended = text.substring(oldLength);
+  if (!streaming || config == null || appended.isEmpty) {
+    if (appended.isNotEmpty) out.add(TextSpan(text: appended, style: style));
+    return charOffset + text.length;
+  }
+
+  final parts = config.sep == AnimationSeparator.char
+      ? _splitCharacters(appended)
+      : _splitWords(appended);
+  var animatedIndex = newSpanOffset;
+  for (final part in parts) {
+    if (part.trim().isEmpty) {
+      out.add(TextSpan(text: part, style: style));
+      continue;
+    }
+    final opacity =
+        ((animationElapsedMs - animatedIndex * config.stagger) /
+                config.duration)
+            .clamp(0.0, 1.0);
+    final color = style.color;
+    out.add(
+      TextSpan(
+        text: part,
+        style: color == null
+            ? style
+            : style.copyWith(color: color.withValues(alpha: color.a * opacity)),
+      ),
+    );
+    animatedIndex += 1;
+  }
   return charOffset + text.length;
 }
+
+List<String> _splitWords(String text) =>
+    RegExp(r'\s+|\S+').allMatches(text).map((match) => match[0]!).toList();
+
+List<String> _splitCharacters(String text) => text.characters.toList();
+
+int inlineRevealDurationMs(String appendedText, AnimateConfig config) {
+  final count = animatedSegmentCount(appendedText, config);
+  if (count <= 1) return config.duration;
+  return config.duration + (count - 1) * config.stagger;
+}
+
+int animatedSegmentCount(String text, AnimateConfig config) =>
+    config.sep == AnimationSeparator.char
+    ? text.characters.where((char) => char.trim().isNotEmpty).length
+    : RegExp(r'\S+').allMatches(text).length;
 
 // ──────────────────────────────────────────────────────────────────────────
 // Block-level helpers (kept from earlier)

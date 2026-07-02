@@ -51,7 +51,7 @@ class AstRenderer extends StatefulWidget {
 class _AstRendererState extends State<AstRenderer> {
   @override
   Widget build(BuildContext context) {
-    final useBlockAnimation = widget.animated;
+    final useBlockAnimation = widget.animated && widget.animateConfig == null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -176,10 +176,21 @@ class _Heading extends StatefulWidget {
   State<_Heading> createState() => _HeadingState();
 }
 
-class _HeadingState extends State<_Heading> {
+class _HeadingState extends State<_Heading>
+    with SingleTickerProviderStateMixin {
   final List<GestureRecognizer> _recognizers = <GestureRecognizer>[];
   Widget? _cached;
-  int _lastTextLength = 0;
+  late final AnimationController _revealController;
+  int _renderedTextLength = 0;
+  int _animationStartLength = 0;
+  int _animationTotalMs = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _revealController = AnimationController(vsync: this);
+    _startReveal(widget.node.text);
+  }
 
   @override
   void didChangeDependencies() {
@@ -190,10 +201,16 @@ class _HeadingState extends State<_Heading> {
   @override
   void didUpdateWidget(covariant _Heading oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final shouldResetAnimatedLength =
-        widget.streaming != oldWidget.streaming ||
-        widget.animateConfig != oldWidget.animateConfig ||
-        !widget.node.text.startsWith(oldWidget.node.text);
+    if (widget.streaming &&
+        widget.animateConfig != null &&
+        widget.node.text.startsWith(oldWidget.node.text) &&
+        widget.node.text.length > oldWidget.node.text.length) {
+      _animationStartLength = _renderedTextLength;
+      _startReveal(widget.node.text.substring(oldWidget.node.text.length));
+    } else if (!widget.streaming) {
+      _revealController.value = 1;
+      _animationStartLength = _renderedTextLength;
+    }
     if (widget.node.text != oldWidget.node.text ||
         widget.node.isComplete != oldWidget.node.isComplete ||
         widget.baseStyle != oldWidget.baseStyle ||
@@ -203,14 +220,19 @@ class _HeadingState extends State<_Heading> {
         widget.latex != oldWidget.latex ||
         widget.cjk != oldWidget.cjk) {
       _cached = null;
-      if (shouldResetAnimatedLength) {
-        _lastTextLength = 0;
+      if (!widget.node.text.startsWith(oldWidget.node.text)) {
+        // Markdown reinterpretation (for example an emphasis marker closing)
+        // is not new prose. Keep it fully visible instead of replaying the
+        // animation for the whole block.
+        _animationStartLength = _renderedTextLength;
+        _revealController.value = 1;
       }
     }
   }
 
   @override
   void dispose() {
+    _revealController.dispose();
     for (final r in _recognizers) {
       r.dispose();
     }
@@ -220,10 +242,20 @@ class _HeadingState extends State<_Heading> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.node.isComplete && _cached != null) {
+    if (!widget.streaming && widget.node.isComplete && _cached != null) {
       return _cached!;
     }
+    if (!widget.streaming || widget.animateConfig == null) {
+      return _buildText(context);
+    }
 
+    return AnimatedBuilder(
+      animation: _revealController,
+      builder: (context, _) => _buildText(context),
+    );
+  }
+
+  Widget _buildText(BuildContext context) {
     for (final r in _recognizers) {
       r.dispose();
     }
@@ -251,18 +283,37 @@ class _HeadingState extends State<_Heading> {
       cjk: widget.cjk,
       animateConfig: widget.animateConfig,
       streaming: widget.streaming,
-      prevContentLength: _lastTextLength,
+      prevContentLength: _animationStartLength,
+      animationElapsedMs: _animationElapsedMs(context),
     );
 
     final result = Text.rich(TextSpan(children: spans));
 
-    _lastTextLength = renderedLength;
+    _renderedTextLength = renderedLength;
 
     if (widget.node.isComplete) {
       _cached = result;
     }
 
     return result;
+  }
+
+  void _startReveal(String appendedText) {
+    final config = widget.animateConfig;
+    if (!widget.streaming || config == null || appendedText.isEmpty) {
+      _revealController.value = 1;
+      return;
+    }
+    _animationTotalMs = inlineRevealDurationMs(appendedText, config);
+    _revealController.duration = Duration(milliseconds: _animationTotalMs);
+    _revealController.forward(from: 0);
+  }
+
+  double _animationElapsedMs(BuildContext context) {
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      return double.infinity;
+    }
+    return _revealController.value * _animationTotalMs;
   }
 }
 
@@ -292,10 +343,21 @@ class _Paragraph extends StatefulWidget {
   State<_Paragraph> createState() => _ParagraphState();
 }
 
-class _ParagraphState extends State<_Paragraph> {
+class _ParagraphState extends State<_Paragraph>
+    with SingleTickerProviderStateMixin {
   final List<GestureRecognizer> _recognizers = <GestureRecognizer>[];
   Widget? _cached;
-  int _lastTextLength = 0;
+  late final AnimationController _revealController;
+  int _renderedTextLength = 0;
+  int _animationStartLength = 0;
+  int _animationTotalMs = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _revealController = AnimationController(vsync: this);
+    _startReveal(widget.node.text);
+  }
 
   @override
   void didChangeDependencies() {
@@ -306,10 +368,16 @@ class _ParagraphState extends State<_Paragraph> {
   @override
   void didUpdateWidget(covariant _Paragraph oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final shouldResetAnimatedLength =
-        widget.streaming != oldWidget.streaming ||
-        widget.animateConfig != oldWidget.animateConfig ||
-        !widget.node.text.startsWith(oldWidget.node.text);
+    if (widget.streaming &&
+        widget.animateConfig != null &&
+        widget.node.text.startsWith(oldWidget.node.text) &&
+        widget.node.text.length > oldWidget.node.text.length) {
+      _animationStartLength = _renderedTextLength;
+      _startReveal(widget.node.text.substring(oldWidget.node.text.length));
+    } else if (!widget.streaming) {
+      _revealController.value = 1;
+      _animationStartLength = _renderedTextLength;
+    }
     if (widget.node.text != oldWidget.node.text ||
         widget.node.isComplete != oldWidget.node.isComplete ||
         widget.baseStyle != oldWidget.baseStyle ||
@@ -319,14 +387,16 @@ class _ParagraphState extends State<_Paragraph> {
         widget.latex != oldWidget.latex ||
         widget.cjk != oldWidget.cjk) {
       _cached = null;
-      if (shouldResetAnimatedLength) {
-        _lastTextLength = 0;
+      if (!widget.node.text.startsWith(oldWidget.node.text)) {
+        _animationStartLength = _renderedTextLength;
+        _revealController.value = 1;
       }
     }
   }
 
   @override
   void dispose() {
+    _revealController.dispose();
     for (final r in _recognizers) {
       r.dispose();
     }
@@ -336,10 +406,20 @@ class _ParagraphState extends State<_Paragraph> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.node.isComplete && _cached != null) {
+    if (!widget.streaming && widget.node.isComplete && _cached != null) {
       return _cached!;
     }
+    if (!widget.streaming || widget.animateConfig == null) {
+      return _buildText(context);
+    }
 
+    return AnimatedBuilder(
+      animation: _revealController,
+      builder: (context, _) => _buildText(context),
+    );
+  }
+
+  Widget _buildText(BuildContext context) {
     for (final r in _recognizers) {
       r.dispose();
     }
@@ -355,18 +435,37 @@ class _ParagraphState extends State<_Paragraph> {
       cjk: widget.cjk,
       animateConfig: widget.animateConfig,
       streaming: widget.streaming,
-      prevContentLength: _lastTextLength,
+      prevContentLength: _animationStartLength,
+      animationElapsedMs: _animationElapsedMs(context),
     );
 
     final result = Text.rich(TextSpan(children: spans));
 
-    _lastTextLength = renderedLength;
+    _renderedTextLength = renderedLength;
 
     if (widget.node.isComplete) {
       _cached = result;
     }
 
     return result;
+  }
+
+  void _startReveal(String appendedText) {
+    final config = widget.animateConfig;
+    if (!widget.streaming || config == null || appendedText.isEmpty) {
+      _revealController.value = 1;
+      return;
+    }
+    _animationTotalMs = inlineRevealDurationMs(appendedText, config);
+    _revealController.duration = Duration(milliseconds: _animationTotalMs);
+    _revealController.forward(from: 0);
+  }
+
+  double _animationElapsedMs(BuildContext context) {
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      return double.infinity;
+    }
+    return _revealController.value * _animationTotalMs;
   }
 }
 
@@ -475,7 +574,7 @@ class _List extends StatelessWidget {
       children: <Widget>[
         for (var i = 0; i < node.items.length; i++)
           _ListItem(
-            key: _nodeKey(node.items[i]),
+            key: ValueKey<String>('$keySeed:list-item:$i'),
             node: node.items[i],
             marker: _markerFor(node, i, start),
             baseStyle: baseStyle,
@@ -497,9 +596,6 @@ class _List extends StatelessWidget {
     }
     return list.ordered ? '${start + index}.' : '•';
   }
-
-  ValueKey<String> _nodeKey(AstNode node) =>
-      ValueKey<String>('$keySeed:${node.runtimeType}:${node.id}');
 }
 
 class _ListItem extends StatelessWidget {
@@ -539,10 +635,10 @@ class _ListItem extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             spacing: 4,
             children: <Widget>[
-              for (final child in node.children)
+              for (final (index, child) in node.children.indexed)
                 if (child is ParagraphNode)
                   _Paragraph(
-                    key: _nodeKey(child),
+                    key: ValueKey<String>('$keySeed:list-paragraph:$index'),
                     node: child,
                     baseStyle: baseStyle,
                     onLinkTap: onLinkTap,
@@ -560,7 +656,4 @@ class _ListItem extends StatelessWidget {
       ],
     );
   }
-
-  ValueKey<String> _nodeKey(AstNode node) =>
-      ValueKey<String>('$keySeed:${node.runtimeType}:${node.id}');
 }

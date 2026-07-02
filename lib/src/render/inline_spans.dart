@@ -25,6 +25,7 @@ import 'animation.dart';
   AnimateConfig? animateConfig,
   bool streaming = false,
   int prevContentLength = 0,
+  double animationElapsedMs = double.infinity,
 }) {
   final tokens = InlineTokenizer.tokenize(text, latex: latex, cjk: cjk);
   final theme = Theme.of(context);
@@ -34,6 +35,7 @@ import 'animation.dart';
   var em = 0;
   var strike = 0;
   var charOffset = 0;
+  var animatedSpanOffset = 0;
 
   TextStyle styleNow() {
     var s = base;
@@ -72,6 +74,10 @@ import 'animation.dart';
     switch (token) {
       case InlineTextToken(:final text):
         renderedLength += text.length;
+        final oldLength = (prevContentLength - charOffset).clamp(
+          0,
+          text.length,
+        );
         charOffset = buildAnimatedSpans(
           text,
           styleNow(),
@@ -80,16 +86,37 @@ import 'animation.dart';
           prevContentLength: prevContentLength,
           charOffset: charOffset,
           out: spans,
+          animationElapsedMs: animationElapsedMs,
+          newSpanOffset: animatedSpanOffset,
         );
+        if (streaming && animateConfig != null) {
+          animatedSpanOffset += animatedSegmentCount(
+            text.substring(oldLength),
+            animateConfig,
+          );
+        }
       case StrongDelimToken():
-        if (strong > 0) { strong--; } else { strong++; }
+        if (strong > 0) {
+          strong--;
+        } else {
+          strong++;
+        }
       case EmphasisDelimToken():
-        if (em > 0) { em--; } else { em++; }
+        if (em > 0) {
+          em--;
+        } else {
+          em++;
+        }
       case StrikeDelimToken():
-        if (strike > 0) { strike--; } else { strike++; }
+        if (strike > 0) {
+          strike--;
+        } else {
+          strike++;
+        }
       case CodeSpanToken(:final content):
         renderedLength += content.length;
         spans.add(TextSpan(text: content, style: codeSpanStyle()));
+        charOffset += content.length;
       case LinkToken(:final text, :final url, :final isImage):
         if (isImage) {
           spans.add(
@@ -106,7 +133,8 @@ import 'animation.dart';
                   if (wasSyncLoaded || frame != null) return child;
                   return Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4,
+                      horizontal: 8,
+                      vertical: 4,
                     ),
                     color: theme.colorScheme.surfaceContainerHighest,
                     child: Text(
@@ -127,6 +155,7 @@ import 'animation.dart';
               recognizer: makeTapRecognizer(url),
             ),
           );
+          charOffset += text.length;
         }
       case AutolinkToken(:final url):
         renderedLength += url.length;
@@ -137,9 +166,11 @@ import 'animation.dart';
             recognizer: makeTapRecognizer(url),
           ),
         );
+        charOffset += url.length;
       case HardBreakToken():
         renderedLength += 1;
         spans.add(const TextSpan(text: '\n'));
+        charOffset += 1;
       case MathToken(:final tex, :final isBlock):
         spans.add(
           WidgetSpan(
@@ -156,16 +187,16 @@ import 'animation.dart';
           ),
         );
       case HeadingToken() ||
-           HorizontalRuleToken() ||
-           BlockquoteMarkerToken() ||
-           ListMarkerToken() ||
-           FenceOpenToken() ||
-           FenceCloseToken() ||
-           CodeLineToken() ||
-           TableRowToken() ||
-           TableSeparatorToken() ||
-           TextLineToken() ||
-           BlankLineToken():
+          HorizontalRuleToken() ||
+          BlockquoteMarkerToken() ||
+          ListMarkerToken() ||
+          FenceOpenToken() ||
+          FenceCloseToken() ||
+          CodeLineToken() ||
+          TableRowToken() ||
+          TableSeparatorToken() ||
+          TextLineToken() ||
+          BlankLineToken():
         break;
     }
   }
