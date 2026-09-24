@@ -430,13 +430,17 @@ class _ParagraphState extends State<_Paragraph>
   }
 
   Widget _buildText(BuildContext context) {
+    for (final r in _recognizers) {
+      r.dispose();
+    }
+    _recognizers.clear();
     final standaloneImage = RegExp(
       r'^!\[([^\]]*)\]\((https?://[^\s)]+)(?:\s+"[^"]*")?\)$',
     ).firstMatch(widget.node.text.trim());
     if (standaloneImage != null) {
       final alt = standaloneImage.group(1)!.trim();
       final url = standaloneImage.group(2)!;
-      return Semantics(
+      final result = Semantics(
         label: alt.isEmpty ? 'Image' : alt,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720, maxHeight: 440),
@@ -459,11 +463,10 @@ class _ParagraphState extends State<_Paragraph>
           ),
         ),
       );
+      _renderedTextLength = 0;
+      if (widget.node.isComplete) _cached = result;
+      return result;
     }
-    for (final r in _recognizers) {
-      r.dispose();
-    }
-    _recognizers.clear();
 
     final (:spans, :renderedLength) = buildInlineSpans(
       widget.node.text,
