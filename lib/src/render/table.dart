@@ -86,12 +86,14 @@ class TableWidget extends StatefulWidget {
     required this.node,
     this.baseStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
     this.latex = false,
   });
 
   final TableNode node;
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
   final bool latex;
 
   @override
@@ -212,6 +214,7 @@ class _TableWidgetState extends State<TableWidget> {
                                     (widget.baseStyle ?? const TextStyle())
                                         .copyWith(fontWeight: FontWeight.w600),
                                 onLinkTap: widget.onLinkTap,
+                                inlineLinkBuilder: widget.inlineLinkBuilder,
                                 latex: widget.latex,
                               ),
                           ],
@@ -226,6 +229,7 @@ class _TableWidgetState extends State<TableWidget> {
                                   recognizers: _recognizers,
                                   baseStyle: widget.baseStyle,
                                   onLinkTap: widget.onLinkTap,
+                                  inlineLinkBuilder: widget.inlineLinkBuilder,
                                   latex: widget.latex,
                                 ),
                             ],
@@ -255,6 +259,7 @@ class _Cell extends StatelessWidget {
     required this.recognizers,
     this.baseStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
     this.latex = false,
   });
 
@@ -263,6 +268,7 @@ class _Cell extends StatelessWidget {
   final TextStyle? baseStyle;
   final List<GestureRecognizer> recognizers;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
   final bool latex;
 
   @override
@@ -272,6 +278,7 @@ class _Cell extends StatelessWidget {
       context,
       baseStyle: baseStyle,
       onLinkTap: onLinkTap,
+      inlineLinkBuilder: inlineLinkBuilder,
       recognizers: recognizers,
       latex: latex,
     );

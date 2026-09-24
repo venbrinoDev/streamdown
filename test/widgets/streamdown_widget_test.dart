@@ -166,6 +166,29 @@ void main() {
       final richText = tester.widget<RichText>(find.byType(RichText).first);
       expect(richText.text.toPlainText(), contains('https://example.com'));
     });
+
+    testWidgets('inline link builder replaces only selected links', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Streamdown.text(
+              'Read [the guide](https://example.com/guide) '
+              'and [Example](https://example.com/story).',
+              inlineLinkBuilder: (context, label, uri) => label == 'Example'
+                  ? Text('Source: $label', key: const Key('source-chip'))
+                  : null,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byKey(const Key('source-chip')), findsOneWidget);
+      final richText = tester.widget<RichText>(find.byType(RichText).first);
+      expect(richText.text.toPlainText(), contains('the guide'));
+      expect(richText.text.toPlainText(), isNot(contains('Source: Example')));
+    });
   });
 
   group('Streamdown — selection', () {

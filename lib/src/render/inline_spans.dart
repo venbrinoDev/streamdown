@@ -12,6 +12,11 @@ import '../parser/inline_tokenizer.dart';
 import '../parser/token.dart';
 import 'animation.dart';
 
+/// Optionally replaces a Markdown link with an inline widget. Return null to
+/// keep Streamdown's normal text link.
+typedef InlineLinkBuilder =
+    Widget? Function(BuildContext context, String text, Uri uri);
+
 /// Tokenize [text] and return the corresponding [InlineSpan]s plus the
 /// rendered visible-text length used for streaming animation bookkeeping.
 ({List<InlineSpan> spans, int renderedLength}) buildInlineSpans(
@@ -19,6 +24,7 @@ import 'animation.dart';
   BuildContext context, {
   TextStyle? baseStyle,
   void Function(Uri uri)? onLinkTap,
+  InlineLinkBuilder? inlineLinkBuilder,
   required List<GestureRecognizer> recognizers,
   bool latex = false,
   bool cjk = false,
@@ -155,13 +161,26 @@ import 'animation.dart';
           );
         } else {
           renderedLength += text.length;
-          spans.add(
-            TextSpan(
-              text: text,
-              style: linkStyle(),
-              recognizer: makeTapRecognizer(url),
-            ),
-          );
+          final uri = Uri.tryParse(url);
+          final replacement = uri == null
+              ? null
+              : inlineLinkBuilder?.call(context, text, uri);
+          if (replacement != null) {
+            spans.add(
+              WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: replacement,
+              ),
+            );
+          } else {
+            spans.add(
+              TextSpan(
+                text: text,
+                style: linkStyle(),
+                recognizer: makeTapRecognizer(url),
+              ),
+            );
+          }
           charOffset += text.length;
         }
       case AutolinkToken(:final url):

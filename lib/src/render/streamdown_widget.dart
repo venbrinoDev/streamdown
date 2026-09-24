@@ -17,6 +17,7 @@ import '../parser/remend.dart';
 import '../parser/tokenizer.dart';
 import 'animation.dart';
 import 'ast_renderer.dart';
+import 'inline_spans.dart';
 import 'syntax_theme.dart';
 
 class Streamdown extends StatefulWidget {
@@ -27,6 +28,7 @@ class Streamdown extends StatefulWidget {
     this.textStyle,
     this.selectable = true,
     this.onLinkTap,
+    this.inlineLinkBuilder,
     this.padding,
     this.syntaxTheme,
     this.codeBlockBuilder,
@@ -50,6 +52,7 @@ class Streamdown extends StatefulWidget {
     this.textStyle,
     this.selectable = true,
     this.onLinkTap,
+    this.inlineLinkBuilder,
     this.padding,
     this.syntaxTheme,
     this.codeBlockBuilder,
@@ -72,6 +75,7 @@ class Streamdown extends StatefulWidget {
   final TextStyle? textStyle;
   final bool selectable;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
   final EdgeInsetsGeometry? padding;
   final SyntaxTheme? syntaxTheme;
   final CodeBlockBuilder? codeBlockBuilder;
@@ -221,6 +225,7 @@ class _StreamdownState extends State<Streamdown> {
       keySeed: _renderGeneration,
       textStyle: widget.textStyle,
       onLinkTap: widget.onLinkTap,
+      inlineLinkBuilder: widget.inlineLinkBuilder,
       syntaxTheme: widget.syntaxTheme ?? SyntaxTheme.auto(context),
       codeBlockBuilder: widget.codeBlockBuilder,
       directiveBuilder: widget.directiveBuilder,

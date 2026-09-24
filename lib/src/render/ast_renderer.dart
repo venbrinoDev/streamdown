@@ -25,6 +25,7 @@ class AstRenderer extends StatefulWidget {
     required this.keySeed,
     this.textStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
     this.codeBlockBuilder,
     this.directiveBuilder,
     this.latex = false,
@@ -39,6 +40,7 @@ class AstRenderer extends StatefulWidget {
   final int keySeed;
   final TextStyle? textStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
   final SyntaxTheme syntaxTheme;
   final CodeBlockBuilder? codeBlockBuilder;
   final DirectiveBuilder? directiveBuilder;
@@ -82,6 +84,7 @@ class _AstRendererState extends State<AstRenderer> {
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
+        inlineLinkBuilder: widget.inlineLinkBuilder,
         latex: widget.latex,
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
@@ -93,6 +96,7 @@ class _AstRendererState extends State<AstRenderer> {
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
+        inlineLinkBuilder: widget.inlineLinkBuilder,
         latex: widget.latex,
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
@@ -112,6 +116,7 @@ class _AstRendererState extends State<AstRenderer> {
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
+        inlineLinkBuilder: widget.inlineLinkBuilder,
         latex: widget.latex,
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
@@ -123,6 +128,7 @@ class _AstRendererState extends State<AstRenderer> {
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
+        inlineLinkBuilder: widget.inlineLinkBuilder,
         latex: widget.latex,
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
@@ -146,6 +152,7 @@ class _AstRendererState extends State<AstRenderer> {
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
+        inlineLinkBuilder: widget.inlineLinkBuilder,
         latex: widget.latex,
       ),
       DocumentNode() || ListItemNode() => const SizedBox.shrink(),
@@ -166,6 +173,7 @@ class _Heading extends StatefulWidget {
     required this.node,
     this.baseStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -176,6 +184,7 @@ class _Heading extends StatefulWidget {
   final HeadingNode node;
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -225,6 +234,7 @@ class _HeadingState extends State<_Heading>
         widget.node.isComplete != oldWidget.node.isComplete ||
         widget.baseStyle != oldWidget.baseStyle ||
         widget.onLinkTap != oldWidget.onLinkTap ||
+        widget.inlineLinkBuilder != oldWidget.inlineLinkBuilder ||
         widget.animateConfig != oldWidget.animateConfig ||
         widget.streaming != oldWidget.streaming ||
         widget.latex != oldWidget.latex ||
@@ -288,6 +298,7 @@ class _HeadingState extends State<_Heading>
       context,
       baseStyle: merged,
       onLinkTap: widget.onLinkTap,
+      inlineLinkBuilder: widget.inlineLinkBuilder,
       recognizers: _recognizers,
       latex: widget.latex,
       cjk: widget.cjk,
@@ -333,6 +344,7 @@ class _Paragraph extends StatefulWidget {
     required this.node,
     this.baseStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -343,6 +355,7 @@ class _Paragraph extends StatefulWidget {
   final ParagraphNode node;
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -392,6 +405,7 @@ class _ParagraphState extends State<_Paragraph>
         widget.node.isComplete != oldWidget.node.isComplete ||
         widget.baseStyle != oldWidget.baseStyle ||
         widget.onLinkTap != oldWidget.onLinkTap ||
+        widget.inlineLinkBuilder != oldWidget.inlineLinkBuilder ||
         widget.animateConfig != oldWidget.animateConfig ||
         widget.streaming != oldWidget.streaming ||
         widget.latex != oldWidget.latex ||
@@ -473,6 +487,7 @@ class _ParagraphState extends State<_Paragraph>
       context,
       baseStyle: widget.baseStyle,
       onLinkTap: widget.onLinkTap,
+      inlineLinkBuilder: widget.inlineLinkBuilder,
       recognizers: _recognizers,
       latex: widget.latex,
       cjk: widget.cjk,
@@ -518,6 +533,7 @@ class _Blockquote extends StatelessWidget {
     required this.node,
     this.baseStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -528,6 +544,7 @@ class _Blockquote extends StatelessWidget {
   final BlockquoteNode node;
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -560,6 +577,7 @@ class _Blockquote extends StatelessWidget {
         node: child,
         baseStyle: baseStyle,
         onLinkTap: onLinkTap,
+        inlineLinkBuilder: inlineLinkBuilder,
         latex: latex,
         cjk: cjk,
         animateConfig: animateConfig,
@@ -571,6 +589,7 @@ class _Blockquote extends StatelessWidget {
         node: child,
         baseStyle: baseStyle,
         onLinkTap: onLinkTap,
+        inlineLinkBuilder: inlineLinkBuilder,
         latex: latex,
         cjk: cjk,
         animateConfig: animateConfig,
@@ -591,6 +610,7 @@ class _List extends StatelessWidget {
     required this.node,
     this.baseStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -601,6 +621,7 @@ class _List extends StatelessWidget {
   final ListNode node;
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -622,6 +643,7 @@ class _List extends StatelessWidget {
             marker: _markerFor(node, i, start),
             baseStyle: baseStyle,
             onLinkTap: onLinkTap,
+            inlineLinkBuilder: inlineLinkBuilder,
             latex: latex,
             cjk: cjk,
             animateConfig: animateConfig,
@@ -648,6 +670,7 @@ class _ListItem extends StatelessWidget {
     required this.marker,
     this.baseStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -659,6 +682,7 @@ class _ListItem extends StatelessWidget {
   final String marker;
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -685,6 +709,7 @@ class _ListItem extends StatelessWidget {
                     node: child,
                     baseStyle: baseStyle,
                     onLinkTap: onLinkTap,
+                    inlineLinkBuilder: inlineLinkBuilder,
                     latex: latex,
                     cjk: cjk,
                     animateConfig: animateConfig,
