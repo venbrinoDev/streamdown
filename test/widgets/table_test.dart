@@ -154,6 +154,29 @@ void main() {
       expect(table.border?.verticalInside.style, BorderStyle.none);
     });
 
+    testWidgets('table rules stay neutral with a purple app accent', (
+      tester,
+    ) async {
+      const md = '| Model | Price |\n|---|---|\n| One | \$99 |\n';
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.purple,
+              brightness: Brightness.dark,
+            ).copyWith(onSurface: Colors.white, outlineVariant: Colors.purple),
+          ),
+          home: const Scaffold(body: Streamdown.text(md)),
+        ),
+      );
+
+      final table = tester.widget<Table>(find.byType(Table));
+      expect(
+        table.border?.horizontalInside.color,
+        Colors.white.withValues(alpha: 0.12),
+      );
+    });
+
     testWidgets('copy menu stays reachable outside the table viewport', (
       tester,
     ) async {

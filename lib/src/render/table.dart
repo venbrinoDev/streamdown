@@ -138,7 +138,9 @@ class _TableWidgetState extends State<TableWidget> {
     _recognizers.clear();
 
     final theme = Theme.of(context);
-    final borderColor = theme.colorScheme.outlineVariant.withValues(alpha: 0.7);
+    // outlineVariant is often tinted with an app's accent. Tables need quiet
+    // structure, so derive their rules from the foreground instead.
+    final borderColor = theme.colorScheme.onSurface.withValues(alpha: 0.12);
     final headerBg = theme.colorScheme.surfaceContainerHigh;
     final columnCount = widget.node.headers.length;
 
