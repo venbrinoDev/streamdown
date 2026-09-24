@@ -1,13 +1,15 @@
 // GFM table widget with copy controls.
 //
 // Each cell can contain inline markdown (bold, italic, links, inline code).
-// Column widths use `IntrinsicColumnWidth` — they grow as wider content
-// arrives but never shrink, which gives stable layout during streaming.
+// Columns are sized from the viewport rather than the intrinsic width of
+// every cell. This keeps streamed rows stable without repeatedly measuring
+// the whole table.
 //
 // Wide tables wrap in a horizontal `SingleChildScrollView`. A copy dropdown
 // above the table lets users export as CSV, TSV, or Markdown.
 
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -98,7 +100,6 @@ class TableWidget extends StatefulWidget {
 
 class _TableWidgetState extends State<TableWidget> {
   final List<GestureRecognizer> _recognizers = <GestureRecognizer>[];
-  bool _showMenu = false;
   bool _copied = false;
   Timer? _resetTimer;
 
@@ -111,7 +112,6 @@ class _TableWidgetState extends State<TableWidget> {
     Clipboard.setData(ClipboardData(text: content));
     setState(() {
       _copied = true;
-      _showMenu = false;
     });
     _resetTimer?.cancel();
     _resetTimer = Timer(const Duration(seconds: 2), () {
@@ -138,117 +138,112 @@ class _TableWidgetState extends State<TableWidget> {
     _recognizers.clear();
 
     final theme = Theme.of(context);
-    final borderColor = theme.colorScheme.outlineVariant;
-    final headerBg = theme.colorScheme.surfaceContainerHighest;
+    final borderColor = theme.colorScheme.outlineVariant.withValues(alpha: 0.7);
+    final headerBg = theme.colorScheme.surfaceContainerHigh;
+    final columnCount = widget.node.headers.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            SizedBox(
-              height: 32,
-              child: Stack(
-                children: <Widget>[
-                  IconButton(
-                    tooltip: _copied ? 'Copied' : 'Copy table',
-                    icon: Icon(
-                      _copied ? Icons.check : Icons.content_copy_outlined,
-                      size: 16,
-                      color: _copied
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
-                    ),
-                    onPressed: () => setState(() => _showMenu = !_showMenu),
-                  ),
-                  if (_showMenu)
-                    Positioned(
-                      top: 32,
-                      right: 0,
-                      child: Material(
-                        elevation: 4,
-                        borderRadius: BorderRadius.circular(6),
-                        child: IntrinsicWidth(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              _menuItem('Markdown', () => _copy('md')),
-                              _menuItem('CSV', () => _copy('csv')),
-                              _menuItem('TSV', () => _copy('tsv')),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: PopupMenuButton<String>(
+            tooltip: _copied ? 'Copied' : 'Copy table',
+            onSelected: _copy,
+            icon: Icon(
+              _copied ? Icons.check : Icons.copy_outlined,
+              size: 17,
+              color: _copied
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
-          ],
-        ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Table(
-            defaultColumnWidth: const IntrinsicColumnWidth(),
-            border: TableBorder.all(color: borderColor),
-            children: <TableRow>[
-              TableRow(
-                decoration: BoxDecoration(color: headerBg),
-                children: <Widget>[
-                  for (var i = 0; i < widget.node.headers.length; i++)
-                    _Cell(
-                      text: widget.node.headers[i],
-                      alignment: _safeAlignment(i),
-                      recognizers: _recognizers,
-                      baseStyle: (widget.baseStyle ?? const TextStyle())
-                          .copyWith(fontWeight: FontWeight.bold),
-                      onLinkTap: widget.onLinkTap,
-                      latex: widget.latex,
-                    ),
-                ],
-              ),
-              for (final row in widget.node.rows)
-                TableRow(
-                  children: <Widget>[
-                    for (var i = 0; i < widget.node.headers.length; i++)
-                      _Cell(
-                        text: i < row.length ? row[i] : '',
-                        alignment: _safeAlignment(i),
-                        recognizers: _recognizers,
-                        baseStyle: widget.baseStyle,
-                        onLinkTap: widget.onLinkTap,
-                        latex: widget.latex,
-                      ),
-                  ],
-                ),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'md', child: Text('Copy Markdown')),
+              PopupMenuItem(value: 'csv', child: Text('Copy CSV')),
+              PopupMenuItem(value: 'tsv', child: Text('Copy TSV')),
             ],
           ),
+        ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (columnCount == 0) return const SizedBox.shrink();
+            final viewportWidth = constraints.maxWidth.isFinite
+                ? constraints.maxWidth
+                : 720.0;
+            final columnWidth = (viewportWidth / columnCount).clamp(
+              180.0,
+              280.0,
+            );
+            final tableWidth = math.max(
+              viewportWidth,
+              columnWidth * columnCount,
+            );
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: borderColor),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: Table(
+                      defaultColumnWidth: FixedColumnWidth(
+                        tableWidth / columnCount,
+                      ),
+                      border: TableBorder(
+                        horizontalInside: BorderSide(color: borderColor),
+                      ),
+                      children: <TableRow>[
+                        TableRow(
+                          decoration: BoxDecoration(color: headerBg),
+                          children: <Widget>[
+                            for (var i = 0; i < columnCount; i++)
+                              _Cell(
+                                text: widget.node.headers[i],
+                                alignment: _safeAlignment(i),
+                                recognizers: _recognizers,
+                                baseStyle:
+                                    (widget.baseStyle ?? const TextStyle())
+                                        .copyWith(fontWeight: FontWeight.w600),
+                                onLinkTap: widget.onLinkTap,
+                                latex: widget.latex,
+                              ),
+                          ],
+                        ),
+                        for (final row in widget.node.rows)
+                          TableRow(
+                            children: <Widget>[
+                              for (var i = 0; i < columnCount; i++)
+                                _Cell(
+                                  text: i < row.length ? row[i] : '',
+                                  alignment: _safeAlignment(i),
+                                  recognizers: _recognizers,
+                                  baseStyle: widget.baseStyle,
+                                  onLinkTap: widget.onLinkTap,
+                                  latex: widget.latex,
+                                ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
   }
 
-  Widget _menuItem(String label, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Text(label, style: const TextStyle(fontSize: 13)),
-      ),
-    );
-  }
-
   TableAlignment _safeAlignment(int column) =>
       column < widget.node.alignments.length
-          ? widget.node.alignments[column]
-          : TableAlignment.none;
+      ? widget.node.alignments[column]
+      : TableAlignment.none;
 }
 
 class _Cell extends StatelessWidget {
@@ -279,7 +274,7 @@ class _Cell extends StatelessWidget {
       latex: latex,
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Text.rich(
         TextSpan(children: result.spans),
         textAlign: _textAlign(alignment),

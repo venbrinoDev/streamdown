@@ -51,6 +51,18 @@ void main() {
   });
 
   group('Streamdown — inline markdown in cells', () {
+    testWidgets('product images stay inside their table cells', (tester) async {
+      const md =
+          '| Model | Price |\n|---|---|\n| ![Headphones](https://example.com/headphones.png) | \$99 |\n';
+      await pumpStatic(tester, md);
+
+      expect(find.byType(Table), findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(Table), matching: find.byType(Image)),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('bold delimiters are stripped and the text remains', (
       tester,
     ) async {
@@ -127,6 +139,32 @@ void main() {
         matching: find.byType(SingleChildScrollView),
       );
       expect(scrollView, findsWidgets);
+    });
+
+    testWidgets('uses fixed columns and readable row separators', (
+      tester,
+    ) async {
+      const md =
+          '| Product | Price | Battery |\n|---|---|---|\n| One | \$99 | 30 h |\n';
+      await pumpStatic(tester, md);
+
+      final table = tester.widget<Table>(find.byType(Table));
+      expect(table.defaultColumnWidth, isA<FixedColumnWidth>());
+      expect(table.border?.horizontalInside.style, BorderStyle.solid);
+      expect(table.border?.verticalInside.style, BorderStyle.none);
+    });
+
+    testWidgets('copy menu stays reachable outside the table viewport', (
+      tester,
+    ) async {
+      const md = '| Product | Price |\n|---|---|\n| One | \$99 |\n';
+      await pumpStatic(tester, md);
+
+      await tester.tap(find.byTooltip('Copy table'));
+      await tester.pumpAndSettle();
+      expect(find.text('Copy Markdown'), findsOneWidget);
+      expect(find.text('Copy CSV'), findsOneWidget);
+      expect(find.text('Copy TSV'), findsOneWidget);
     });
   });
 
