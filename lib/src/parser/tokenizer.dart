@@ -13,7 +13,10 @@
 import 'token.dart';
 
 class Tokenizer {
-  Tokenizer();
+  Tokenizer({this.enableDirectives = false});
+
+  /// Recognize `:::jv-*` blocks only for applications that provide a renderer.
+  final bool enableDirectives;
 
   /// Buffer of characters that arrived but haven't yet been terminated by a
   /// newline. Cleared as soon as a `\n` is seen.
@@ -22,6 +25,7 @@ class Tokenizer {
   // Fence state — carried across feed() calls.
   bool _insideFence = false;
   bool _insideDirective = false;
+  bool _discardDirective = false;
   int _directiveLines = 0;
   String _fenceChar = '';
   int _fenceLength = 0;
@@ -79,6 +83,7 @@ class Tokenizer {
       if (line.trim() == ':::') {
         out.add(const DirectiveCloseToken());
         _insideDirective = false;
+        _discardDirective = false;
         return;
       }
       if (line.trim().isEmpty) {
@@ -86,6 +91,7 @@ class Tokenizer {
         out.add(const DirectiveCloseToken());
         out.add(const BlankLineToken());
         _insideDirective = false;
+        _discardDirective = false;
         return;
       }
       // A second opener recovers from a missing close without swallowing the
@@ -96,20 +102,20 @@ class Tokenizer {
         out.add(const DirectiveCloseToken());
         out.add(DirectiveOpenToken(next.group(1)!));
         _directiveLines = 0;
+        _discardDirective = false;
         return;
       }
+      if (_discardDirective) return;
       _directiveLines++;
       if (_directiveLines > 32 || line.length > 2048) {
         out.add(const DirectiveInvalidToken());
-        out.add(const DirectiveCloseToken());
-        _insideDirective = false;
+        _discardDirective = true;
         return;
       }
       final field = _directiveFieldRe.firstMatch(line);
       if (field == null) {
         out.add(const DirectiveInvalidToken());
-        out.add(const DirectiveCloseToken());
-        _insideDirective = false;
+        _discardDirective = true;
       } else {
         out.add(DirectiveFieldToken(field.group(1)!, field.group(2)!));
       }
@@ -138,14 +144,16 @@ class Tokenizer {
       return;
     }
 
-    final directive = _directiveOpenRe.firstMatch(line);
+    final directive = enableDirectives
+        ? _directiveOpenRe.firstMatch(line)
+        : null;
     if (directive != null) {
       _insideDirective = true;
       _directiveLines = 0;
       out.add(DirectiveOpenToken(directive.group(1)!));
       return;
     }
-    if (line.trim() == ':::') {
+    if (enableDirectives && line.trim() == ':::') {
       out.add(const DirectiveCloseToken());
       return;
     }

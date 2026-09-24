@@ -5,6 +5,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:streamdown/streamdown.dart';
 
 void main() {
+  testWidgets('plain Markdown does not consume a directive without a builder', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: Streamdown.text(':::jv-place\ntitle: A\n:::\n')),
+      ),
+    );
+    expect(find.textContaining(':::jv-place'), findsWidgets);
+    expect(find.textContaining('Visual item unavailable'), findsNothing);
+  });
+
   testWidgets('hides a split directive opener before its name is complete', (
     tester,
   ) async {

@@ -139,7 +139,7 @@ class _StreamdownState extends State<Streamdown> {
   }
 
   void _initPipeline() {
-    _tokenizer = Tokenizer();
+    _tokenizer = Tokenizer(enableDirectives: widget.directiveBuilder != null);
     _parser = Parser();
     _renderGeneration += 1;
     _streamError = null;
@@ -176,13 +176,14 @@ class _StreamdownState extends State<Streamdown> {
     _accumulatedBuffer += chunk;
     if (widget.parseIncompleteMarkdown) {
       final healed = remend(_accumulatedBuffer, widget.remendOptions);
-      _tokenizer = Tokenizer();
+      _tokenizer = Tokenizer(enableDirectives: widget.directiveBuilder != null);
       _parser = Parser();
       _parser.feed(_tokenizer.feed(healed));
       // Do not promote a half-written directive field (or opener) into a
       // visible block. Ordinary Markdown keeps its provisional behaviour.
       if (!_tokenizer.insideDirective &&
-          !_tokenizer.pendingLine.startsWith(':::')) {
+          (widget.directiveBuilder == null ||
+              !_tokenizer.pendingLine.startsWith(':::'))) {
         _parser.feed(_tokenizer.complete());
       }
     } else {
@@ -196,7 +197,7 @@ class _StreamdownState extends State<Streamdown> {
       // The streaming snapshots are healed provisionally. Reconcile the final
       // raw source through the same renderer instead of leaving synthetic
       // remend characters in the completed document.
-      _tokenizer = Tokenizer();
+      _tokenizer = Tokenizer(enableDirectives: widget.directiveBuilder != null);
       _parser = Parser();
       _parser.feed(_tokenizer.feed(_accumulatedBuffer));
     }
