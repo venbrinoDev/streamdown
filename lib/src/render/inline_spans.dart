@@ -122,27 +122,34 @@ import 'animation.dart';
           spans.add(
             WidgetSpan(
               alignment: PlaceholderAlignment.middle,
-              child: Image.network(
-                url,
-                semanticLabel: text.isEmpty ? null : text,
-                errorBuilder: (context, error, stackTrace) => Text(
-                  '[$text]',
-                  style: styleNow().copyWith(color: theme.disabledColor),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 180,
+                  maxHeight: 160,
                 ),
-                frameBuilder: (context, child, frame, wasSyncLoaded) {
-                  if (wasSyncLoaded || frame != null) return child;
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: Text(
-                      text.isEmpty ? '...' : text,
-                      style: styleNow().copyWith(color: theme.disabledColor),
-                    ),
-                  );
-                },
+                child: Image.network(
+                  url,
+                  fit: BoxFit.contain,
+                  semanticLabel: text.isEmpty ? null : text,
+                  errorBuilder: (context, error, stackTrace) => Text(
+                    text.isEmpty ? 'Image unavailable' : text,
+                    style: styleNow().copyWith(color: theme.disabledColor),
+                  ),
+                  frameBuilder: (context, child, frame, wasSyncLoaded) {
+                    if (wasSyncLoaded || frame != null) return child;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      child: Text(
+                        text.isEmpty ? 'Image loading' : text,
+                        style: styleNow().copyWith(color: theme.disabledColor),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           );

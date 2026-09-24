@@ -430,6 +430,36 @@ class _ParagraphState extends State<_Paragraph>
   }
 
   Widget _buildText(BuildContext context) {
+    final standaloneImage = RegExp(
+      r'^!\[([^\]]*)\]\((https?://[^\s)]+)(?:\s+"[^"]*")?\)$',
+    ).firstMatch(widget.node.text.trim());
+    if (standaloneImage != null) {
+      final alt = standaloneImage.group(1)!.trim();
+      final url = standaloneImage.group(2)!;
+      return Semantics(
+        label: alt.isEmpty ? 'Image' : alt,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720, maxHeight: 440),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              url,
+              fit: BoxFit.contain,
+              alignment: Alignment.centerLeft,
+              errorBuilder: (context, error, stackTrace) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  alt.isEmpty ? 'Image unavailable' : alt,
+                  style: (widget.baseStyle ?? const TextStyle()).copyWith(
+                    color: Theme.of(context).disabledColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     for (final r in _recognizers) {
       r.dispose();
     }
