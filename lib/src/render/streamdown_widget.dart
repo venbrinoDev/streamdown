@@ -30,6 +30,7 @@ class Streamdown extends StatefulWidget {
     this.padding,
     this.syntaxTheme,
     this.codeBlockBuilder,
+    this.directiveBuilder,
     this.latex = false,
     this.errorBuilder,
     this.parseIncompleteMarkdown = true,
@@ -52,6 +53,7 @@ class Streamdown extends StatefulWidget {
     this.padding,
     this.syntaxTheme,
     this.codeBlockBuilder,
+    this.directiveBuilder,
     this.latex = false,
     this.errorBuilder,
     this.parseIncompleteMarkdown = true,
@@ -73,6 +75,7 @@ class Streamdown extends StatefulWidget {
   final EdgeInsetsGeometry? padding;
   final SyntaxTheme? syntaxTheme;
   final CodeBlockBuilder? codeBlockBuilder;
+  final DirectiveBuilder? directiveBuilder;
   final bool latex;
   final Widget Function(
     BuildContext context,
@@ -176,7 +179,12 @@ class _StreamdownState extends State<Streamdown> {
       _tokenizer = Tokenizer();
       _parser = Parser();
       _parser.feed(_tokenizer.feed(healed));
-      _parser.feed(_tokenizer.complete());
+      // Do not promote a half-written directive field (or opener) into a
+      // visible block. Ordinary Markdown keeps its provisional behaviour.
+      if (!_tokenizer.insideDirective &&
+          !_tokenizer.pendingLine.startsWith(':::')) {
+        _parser.feed(_tokenizer.complete());
+      }
     } else {
       _parser.feed(_tokenizer.feed(chunk));
     }
@@ -214,6 +222,7 @@ class _StreamdownState extends State<Streamdown> {
       onLinkTap: widget.onLinkTap,
       syntaxTheme: widget.syntaxTheme ?? SyntaxTheme.auto(context),
       codeBlockBuilder: widget.codeBlockBuilder,
+      directiveBuilder: widget.directiveBuilder,
       latex: widget.latex,
       cjk: widget.cjk,
       lineNumbers: widget.lineNumbers,

@@ -103,6 +103,10 @@ String snapshot(AstNode node, {int depth = 0}) {
 
     case HorizontalRuleNode():
       sb.write('${indent}HR');
+
+    case DirectiveNode(:final name, :final fields, :final isComplete):
+      sb.write('${indent}Directive($name, $fields)');
+      if (!isComplete) sb.write(' OPEN');
   }
 
   return sb.toString();

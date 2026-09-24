@@ -26,6 +26,18 @@ sealed class AstNode {
   String toString() => '$runtimeType#$id${isComplete ? "" : "(open)"}';
 }
 
+/// A line-oriented native block. Values are updated only after a full line.
+final class DirectiveNode extends AstNode {
+  DirectiveNode(super.id, {required this.name});
+
+  final String name;
+  final Map<String, List<String>> fields = <String, List<String>>{};
+  bool isValid = true;
+
+  String? first(String key) => fields[key]?.firstOrNull;
+  List<String> all(String key) => fields[key] ?? const <String>[];
+}
+
 /// The root of an in-progress document. Owns the top-level children list.
 final class DocumentNode extends AstNode {
   DocumentNode(super.id);

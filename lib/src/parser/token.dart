@@ -12,6 +12,26 @@ sealed class Token {
   const Token();
 }
 
+/// A Jovita visual directive. Only complete source lines become field tokens.
+final class DirectiveOpenToken extends Token {
+  const DirectiveOpenToken(this.name);
+  final String name;
+}
+
+final class DirectiveFieldToken extends Token {
+  const DirectiveFieldToken(this.key, this.value);
+  final String key;
+  final String value;
+}
+
+final class DirectiveInvalidToken extends Token {
+  const DirectiveInvalidToken();
+}
+
+final class DirectiveCloseToken extends Token {
+  const DirectiveCloseToken();
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 // Block-level tokens (one per line, except BlockquoteMarker which prefixes)
 // ──────────────────────────────────────────────────────────────────────────

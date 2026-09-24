@@ -187,6 +187,10 @@ import 'animation.dart';
           ),
         );
       case HeadingToken() ||
+          DirectiveOpenToken() ||
+          DirectiveFieldToken() ||
+          DirectiveInvalidToken() ||
+          DirectiveCloseToken() ||
           HorizontalRuleToken() ||
           BlockquoteMarkerToken() ||
           ListMarkerToken() ||

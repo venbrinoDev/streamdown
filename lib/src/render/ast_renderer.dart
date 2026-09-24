@@ -14,6 +14,9 @@ import 'inline_spans.dart';
 import 'syntax_theme.dart';
 import 'table.dart' as table_widget;
 
+typedef DirectiveBuilder =
+    Widget Function(BuildContext context, DirectiveNode directive);
+
 class AstRenderer extends StatefulWidget {
   const AstRenderer({
     super.key,
@@ -23,6 +26,7 @@ class AstRenderer extends StatefulWidget {
     this.textStyle,
     this.onLinkTap,
     this.codeBlockBuilder,
+    this.directiveBuilder,
     this.latex = false,
     this.cjk = false,
     this.lineNumbers = true,
@@ -37,6 +41,7 @@ class AstRenderer extends StatefulWidget {
   final void Function(Uri uri)? onLinkTap;
   final SyntaxTheme syntaxTheme;
   final CodeBlockBuilder? codeBlockBuilder;
+  final DirectiveBuilder? directiveBuilder;
   final bool latex;
   final bool cjk;
   final bool lineNumbers;
@@ -131,6 +136,11 @@ class _AstRendererState extends State<AstRenderer> {
         builder: widget.codeBlockBuilder,
         showLineNumbers: widget.lineNumbers,
       ),
+      DirectiveNode() =>
+        widget.directiveBuilder?.call(context, node) ??
+            (node.isComplete
+                ? const Text('Visual item unavailable')
+                : const SizedBox.shrink()),
       TableNode() => table_widget.TableWidget(
         key: key,
         node: node,
