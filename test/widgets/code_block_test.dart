@@ -32,7 +32,7 @@ void main() {
       expect(find.text('python'), findsOneWidget);
     });
 
-    testWidgets('no language label when fence has no info string', (
+    testWidgets('plain-text fence has a useful header and copy action', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -40,8 +40,8 @@ void main() {
           home: Scaffold(body: Streamdown.text('```\nplain\n```\n')),
         ),
       );
-      // The header still exists (for the copy button), but no language text.
-      // We assert by searching for the copy icon — it should be present.
+      expect(find.text('Plain text'), findsOneWidget);
+      expect(find.byIcon(Icons.code_rounded), findsOneWidget);
       expect(find.byIcon(Icons.content_copy_outlined), findsOneWidget);
     });
 

@@ -79,9 +79,9 @@ class _CodeBlockWidgetState extends State<CodeBlockWidget> {
       result = Container(
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.12),
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -95,7 +95,7 @@ class _CodeBlockWidgetState extends State<CodeBlockWidget> {
             ),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
               child: _CodeBody(
                 code: widget.node.content,
                 language: widget.node.language,
@@ -197,17 +197,22 @@ class _CodeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 4, 4),
+      padding: const EdgeInsets.fromLTRB(14, 8, 8, 4),
       child: Row(
         children: <Widget>[
-          if (language != null && language!.isNotEmpty)
-            Text(
-              language!,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontFamily: 'monospace',
-              ),
+          Icon(
+            Icons.code_rounded,
+            size: 15,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            language == null || language!.isEmpty ? 'Plain text' : language!,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
             ),
+          ),
           const Spacer(),
           _CopyButton(code: code),
         ],
