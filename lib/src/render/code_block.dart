@@ -100,6 +100,7 @@ class _CodeBlockWidgetState extends State<CodeBlockWidget> {
                 code: widget.node.content,
                 language: widget.node.language,
                 syntaxTheme: widget.syntaxTheme,
+                backgroundColor: bg,
                 defaultColor: fg,
                 showLineNumbers: widget.showLineNumbers,
               ),
@@ -125,6 +126,7 @@ class _CodeBody extends StatelessWidget {
     required this.code,
     required this.language,
     required this.syntaxTheme,
+    required this.backgroundColor,
     required this.defaultColor,
     this.showLineNumbers = true,
   });
@@ -132,6 +134,7 @@ class _CodeBody extends StatelessWidget {
   final String code;
   final String? language;
   final SyntaxTheme syntaxTheme;
+  final Color backgroundColor;
   final Color defaultColor;
   final bool showLineNumbers;
 
@@ -146,12 +149,20 @@ class _CodeBody extends StatelessWidget {
     );
 
     final lines = code.split('\n');
+    // HighlightView paints its own root background at the text's intrinsic
+    // width. Match the enclosing panel so short lines cannot leave a patch.
+    final highlightTheme = <String, TextStyle>{
+      ...syntaxTheme.classes,
+      'root': (syntaxTheme.classes['root'] ?? const TextStyle()).copyWith(
+        backgroundColor: backgroundColor,
+      ),
+    };
     final codeWidget = language == null || language!.isEmpty
         ? Text(code, style: monoStyle)
         : HighlightView(
             code,
             language: language,
-            theme: syntaxTheme.classes,
+            theme: highlightTheme,
             textStyle: monoStyle,
           );
 

@@ -21,6 +21,30 @@ void main() {
       expect(find.textContaining('main', findRichText: true), findsWidgets);
     });
 
+    testWidgets('highlight background matches the full code panel', (
+      tester,
+    ) async {
+      const panelColor = Color(0xFF202226);
+      final syntaxTheme = SyntaxTheme(
+        classes: SyntaxTheme.atomOneDark().classes,
+        background: panelColor,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Streamdown.text(
+              '```dart\nvoid main() {}\n```\n',
+              syntaxTheme: syntaxTheme,
+            ),
+          ),
+        ),
+      );
+
+      final highlight = tester.widget<HighlightView>(find.byType(HighlightView));
+      expect(highlight.theme['root']?.backgroundColor, panelColor);
+      expect(syntaxTheme.classes['root']?.backgroundColor, isNot(panelColor));
+    });
+
     testWidgets('shows the language label in the header', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
