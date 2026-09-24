@@ -26,6 +26,7 @@ class AstRenderer extends StatefulWidget {
     this.textStyle,
     this.onLinkTap,
     this.inlineLinkBuilder,
+    this.imageBuilder,
     this.codeBlockBuilder,
     this.directiveBuilder,
     this.latex = false,
@@ -41,6 +42,7 @@ class AstRenderer extends StatefulWidget {
   final TextStyle? textStyle;
   final void Function(Uri uri)? onLinkTap;
   final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final SyntaxTheme syntaxTheme;
   final CodeBlockBuilder? codeBlockBuilder;
   final DirectiveBuilder? directiveBuilder;
@@ -85,6 +87,7 @@ class _AstRendererState extends State<AstRenderer> {
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
         inlineLinkBuilder: widget.inlineLinkBuilder,
+        imageBuilder: widget.imageBuilder,
         latex: widget.latex,
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
@@ -97,6 +100,7 @@ class _AstRendererState extends State<AstRenderer> {
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
         inlineLinkBuilder: widget.inlineLinkBuilder,
+        imageBuilder: widget.imageBuilder,
         latex: widget.latex,
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
@@ -117,6 +121,7 @@ class _AstRendererState extends State<AstRenderer> {
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
         inlineLinkBuilder: widget.inlineLinkBuilder,
+        imageBuilder: widget.imageBuilder,
         latex: widget.latex,
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
@@ -129,6 +134,7 @@ class _AstRendererState extends State<AstRenderer> {
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
         inlineLinkBuilder: widget.inlineLinkBuilder,
+        imageBuilder: widget.imageBuilder,
         latex: widget.latex,
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
@@ -153,6 +159,7 @@ class _AstRendererState extends State<AstRenderer> {
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
         inlineLinkBuilder: widget.inlineLinkBuilder,
+        imageBuilder: widget.imageBuilder,
         latex: widget.latex,
       ),
       DocumentNode() || ListItemNode() => const SizedBox.shrink(),
@@ -174,6 +181,7 @@ class _Heading extends StatefulWidget {
     this.baseStyle,
     this.onLinkTap,
     this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -185,6 +193,7 @@ class _Heading extends StatefulWidget {
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
   final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -235,6 +244,7 @@ class _HeadingState extends State<_Heading>
         widget.baseStyle != oldWidget.baseStyle ||
         widget.onLinkTap != oldWidget.onLinkTap ||
         widget.inlineLinkBuilder != oldWidget.inlineLinkBuilder ||
+        widget.imageBuilder != oldWidget.imageBuilder ||
         widget.animateConfig != oldWidget.animateConfig ||
         widget.streaming != oldWidget.streaming ||
         widget.latex != oldWidget.latex ||
@@ -299,6 +309,7 @@ class _HeadingState extends State<_Heading>
       baseStyle: merged,
       onLinkTap: widget.onLinkTap,
       inlineLinkBuilder: widget.inlineLinkBuilder,
+      imageBuilder: widget.imageBuilder,
       recognizers: _recognizers,
       latex: widget.latex,
       cjk: widget.cjk,
@@ -345,6 +356,7 @@ class _Paragraph extends StatefulWidget {
     this.baseStyle,
     this.onLinkTap,
     this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -356,6 +368,7 @@ class _Paragraph extends StatefulWidget {
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
   final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -406,6 +419,7 @@ class _ParagraphState extends State<_Paragraph>
         widget.baseStyle != oldWidget.baseStyle ||
         widget.onLinkTap != oldWidget.onLinkTap ||
         widget.inlineLinkBuilder != oldWidget.inlineLinkBuilder ||
+        widget.imageBuilder != oldWidget.imageBuilder ||
         widget.animateConfig != oldWidget.animateConfig ||
         widget.streaming != oldWidget.streaming ||
         widget.latex != oldWidget.latex ||
@@ -454,6 +468,12 @@ class _ParagraphState extends State<_Paragraph>
     if (standaloneImage != null) {
       final alt = standaloneImage.group(1)!.trim();
       final url = standaloneImage.group(2)!;
+      final replacement = widget.imageBuilder?.call(context, alt, url, true);
+      if (replacement != null) {
+        _renderedTextLength = 0;
+        if (widget.node.isComplete) _cached = replacement;
+        return replacement;
+      }
       final result = Semantics(
         label: alt.isEmpty ? 'Image' : alt,
         child: ConstrainedBox(
@@ -488,6 +508,7 @@ class _ParagraphState extends State<_Paragraph>
       baseStyle: widget.baseStyle,
       onLinkTap: widget.onLinkTap,
       inlineLinkBuilder: widget.inlineLinkBuilder,
+      imageBuilder: widget.imageBuilder,
       recognizers: _recognizers,
       latex: widget.latex,
       cjk: widget.cjk,
@@ -534,6 +555,7 @@ class _Blockquote extends StatelessWidget {
     this.baseStyle,
     this.onLinkTap,
     this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -545,6 +567,7 @@ class _Blockquote extends StatelessWidget {
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
   final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -578,6 +601,7 @@ class _Blockquote extends StatelessWidget {
         baseStyle: baseStyle,
         onLinkTap: onLinkTap,
         inlineLinkBuilder: inlineLinkBuilder,
+        imageBuilder: imageBuilder,
         latex: latex,
         cjk: cjk,
         animateConfig: animateConfig,
@@ -590,6 +614,7 @@ class _Blockquote extends StatelessWidget {
         baseStyle: baseStyle,
         onLinkTap: onLinkTap,
         inlineLinkBuilder: inlineLinkBuilder,
+        imageBuilder: imageBuilder,
         latex: latex,
         cjk: cjk,
         animateConfig: animateConfig,
@@ -611,6 +636,7 @@ class _List extends StatelessWidget {
     this.baseStyle,
     this.onLinkTap,
     this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -622,6 +648,7 @@ class _List extends StatelessWidget {
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
   final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -644,6 +671,7 @@ class _List extends StatelessWidget {
             baseStyle: baseStyle,
             onLinkTap: onLinkTap,
             inlineLinkBuilder: inlineLinkBuilder,
+            imageBuilder: imageBuilder,
             latex: latex,
             cjk: cjk,
             animateConfig: animateConfig,
@@ -671,6 +699,7 @@ class _ListItem extends StatelessWidget {
     this.baseStyle,
     this.onLinkTap,
     this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -683,6 +712,7 @@ class _ListItem extends StatelessWidget {
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
   final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -710,6 +740,7 @@ class _ListItem extends StatelessWidget {
                     baseStyle: baseStyle,
                     onLinkTap: onLinkTap,
                     inlineLinkBuilder: inlineLinkBuilder,
+                    imageBuilder: imageBuilder,
                     latex: latex,
                     cjk: cjk,
                     animateConfig: animateConfig,

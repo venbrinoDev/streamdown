@@ -29,6 +29,7 @@ class Streamdown extends StatefulWidget {
     this.selectable = true,
     this.onLinkTap,
     this.inlineLinkBuilder,
+    this.imageBuilder,
     this.padding,
     this.syntaxTheme,
     this.codeBlockBuilder,
@@ -53,6 +54,7 @@ class Streamdown extends StatefulWidget {
     this.selectable = true,
     this.onLinkTap,
     this.inlineLinkBuilder,
+    this.imageBuilder,
     this.padding,
     this.syntaxTheme,
     this.codeBlockBuilder,
@@ -76,6 +78,7 @@ class Streamdown extends StatefulWidget {
   final bool selectable;
   final void Function(Uri uri)? onLinkTap;
   final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final EdgeInsetsGeometry? padding;
   final SyntaxTheme? syntaxTheme;
   final CodeBlockBuilder? codeBlockBuilder;
@@ -226,6 +229,7 @@ class _StreamdownState extends State<Streamdown> {
       textStyle: widget.textStyle,
       onLinkTap: widget.onLinkTap,
       inlineLinkBuilder: widget.inlineLinkBuilder,
+      imageBuilder: widget.imageBuilder,
       syntaxTheme: widget.syntaxTheme ?? SyntaxTheme.auto(context),
       codeBlockBuilder: widget.codeBlockBuilder,
       directiveBuilder: widget.directiveBuilder,

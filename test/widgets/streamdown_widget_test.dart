@@ -189,6 +189,28 @@ void main() {
       expect(richText.text.toPlainText(), contains('the guide'));
       expect(richText.text.toPlainText(), isNot(contains('Source: Example')));
     });
+
+    testWidgets('image builder receives standalone Markdown images', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Streamdown.text(
+              '![Headphones](https://example.com/photo.jpg)\n',
+              imageBuilder: (context, alt, url, isBlock) {
+                expect(alt, 'Headphones');
+                expect(url, 'https://example.com/photo.jpg');
+                expect(isBlock, isTrue);
+                return const SizedBox(key: Key('custom-image'), height: 24);
+              },
+            ),
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('custom-image')), findsOneWidget);
+      expect(find.byType(Image), findsNothing);
+    });
   });
 
   group('Streamdown — selection', () {

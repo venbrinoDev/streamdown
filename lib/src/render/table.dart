@@ -87,6 +87,7 @@ class TableWidget extends StatefulWidget {
     this.baseStyle,
     this.onLinkTap,
     this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
   });
 
@@ -94,6 +95,7 @@ class TableWidget extends StatefulWidget {
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
   final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
 
   @override
@@ -215,6 +217,7 @@ class _TableWidgetState extends State<TableWidget> {
                                         .copyWith(fontWeight: FontWeight.w600),
                                 onLinkTap: widget.onLinkTap,
                                 inlineLinkBuilder: widget.inlineLinkBuilder,
+                                imageBuilder: widget.imageBuilder,
                                 latex: widget.latex,
                               ),
                           ],
@@ -230,6 +233,7 @@ class _TableWidgetState extends State<TableWidget> {
                                   baseStyle: widget.baseStyle,
                                   onLinkTap: widget.onLinkTap,
                                   inlineLinkBuilder: widget.inlineLinkBuilder,
+                                  imageBuilder: widget.imageBuilder,
                                   latex: widget.latex,
                                 ),
                             ],
@@ -260,6 +264,7 @@ class _Cell extends StatelessWidget {
     this.baseStyle,
     this.onLinkTap,
     this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
   });
 
@@ -269,6 +274,7 @@ class _Cell extends StatelessWidget {
   final List<GestureRecognizer> recognizers;
   final void Function(Uri uri)? onLinkTap;
   final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
 
   @override
@@ -279,6 +285,7 @@ class _Cell extends StatelessWidget {
       baseStyle: baseStyle,
       onLinkTap: onLinkTap,
       inlineLinkBuilder: inlineLinkBuilder,
+      imageBuilder: imageBuilder,
       recognizers: recognizers,
       latex: latex,
     );

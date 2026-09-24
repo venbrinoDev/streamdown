@@ -17,6 +17,16 @@ import 'animation.dart';
 typedef InlineLinkBuilder =
     Widget? Function(BuildContext context, String text, Uri uri);
 
+/// Optionally replaces a Markdown image. [isBlock] is true when the image is
+/// the only content in its paragraph. Return null for the default renderer.
+typedef MarkdownImageBuilder =
+    Widget? Function(
+      BuildContext context,
+      String alt,
+      String url,
+      bool isBlock,
+    );
+
 /// Tokenize [text] and return the corresponding [InlineSpan]s plus the
 /// rendered visible-text length used for streaming animation bookkeeping.
 ({List<InlineSpan> spans, int renderedLength}) buildInlineSpans(
@@ -25,6 +35,7 @@ typedef InlineLinkBuilder =
   TextStyle? baseStyle,
   void Function(Uri uri)? onLinkTap,
   InlineLinkBuilder? inlineLinkBuilder,
+  MarkdownImageBuilder? imageBuilder,
   required List<GestureRecognizer> recognizers,
   bool latex = false,
   bool cjk = false,
@@ -128,35 +139,39 @@ typedef InlineLinkBuilder =
           spans.add(
             WidgetSpan(
               alignment: PlaceholderAlignment.middle,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 180,
-                  maxHeight: 160,
-                ),
-                child: Image.network(
-                  url,
-                  fit: BoxFit.contain,
-                  semanticLabel: text.isEmpty ? null : text,
-                  errorBuilder: (context, error, stackTrace) => Text(
-                    text.isEmpty ? 'Image unavailable' : text,
-                    style: styleNow().copyWith(color: theme.disabledColor),
-                  ),
-                  frameBuilder: (context, child, frame, wasSyncLoaded) {
-                    if (wasSyncLoaded || frame != null) return child;
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      child: Text(
-                        text.isEmpty ? 'Image loading' : text,
+              child:
+                  imageBuilder?.call(context, text, url, false) ??
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: 180,
+                      maxHeight: 160,
+                    ),
+                    child: Image.network(
+                      url,
+                      fit: BoxFit.contain,
+                      semanticLabel: text.isEmpty ? null : text,
+                      errorBuilder: (context, error, stackTrace) => Text(
+                        text.isEmpty ? 'Image unavailable' : text,
                         style: styleNow().copyWith(color: theme.disabledColor),
                       ),
-                    );
-                  },
-                ),
-              ),
+                      frameBuilder: (context, child, frame, wasSyncLoaded) {
+                        if (wasSyncLoaded || frame != null) return child;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          child: Text(
+                            text.isEmpty ? 'Image loading' : text,
+                            style: styleNow().copyWith(
+                              color: theme.disabledColor,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
             ),
           );
         } else {
