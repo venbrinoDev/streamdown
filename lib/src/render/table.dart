@@ -177,14 +177,24 @@ class _TableWidgetState extends State<TableWidget> {
             final viewportWidth = constraints.maxWidth.isFinite
                 ? constraints.maxWidth
                 : 720.0;
+            final compact = viewportWidth < 560;
             final columnWidth = (viewportWidth / columnCount).clamp(
-              180.0,
+              compact ? 148.0 : 180.0,
               280.0,
             );
             final tableWidth = math.max(
               viewportWidth,
               columnWidth * columnCount,
             );
+            final cellStyle = compact
+                ? (widget.baseStyle ?? const TextStyle()).copyWith(
+                    fontSize: math.min(widget.baseStyle?.fontSize ?? 14, 13),
+                    height: math.min(widget.baseStyle?.height ?? 1.4, 1.4),
+                  )
+                : widget.baseStyle;
+            final cellPadding = compact
+                ? const EdgeInsets.symmetric(horizontal: 10, vertical: 9)
+                : const EdgeInsets.symmetric(horizontal: 14, vertical: 12);
             return ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: DecoratedBox(
@@ -212,9 +222,9 @@ class _TableWidgetState extends State<TableWidget> {
                                 text: widget.node.headers[i],
                                 alignment: _safeAlignment(i),
                                 recognizers: _recognizers,
-                                baseStyle:
-                                    (widget.baseStyle ?? const TextStyle())
-                                        .copyWith(fontWeight: FontWeight.w600),
+                                baseStyle: (cellStyle ?? const TextStyle())
+                                    .copyWith(fontWeight: FontWeight.w600),
+                                padding: cellPadding,
                                 onLinkTap: widget.onLinkTap,
                                 inlineLinkBuilder: widget.inlineLinkBuilder,
                                 imageBuilder: widget.imageBuilder,
@@ -230,7 +240,8 @@ class _TableWidgetState extends State<TableWidget> {
                                   text: i < row.length ? row[i] : '',
                                   alignment: _safeAlignment(i),
                                   recognizers: _recognizers,
-                                  baseStyle: widget.baseStyle,
+                                  baseStyle: cellStyle,
+                                  padding: cellPadding,
                                   onLinkTap: widget.onLinkTap,
                                   inlineLinkBuilder: widget.inlineLinkBuilder,
                                   imageBuilder: widget.imageBuilder,
@@ -262,6 +273,7 @@ class _Cell extends StatelessWidget {
     required this.alignment,
     required this.recognizers,
     this.baseStyle,
+    required this.padding,
     this.onLinkTap,
     this.inlineLinkBuilder,
     this.imageBuilder,
@@ -271,6 +283,7 @@ class _Cell extends StatelessWidget {
   final String text;
   final TableAlignment alignment;
   final TextStyle? baseStyle;
+  final EdgeInsets padding;
   final List<GestureRecognizer> recognizers;
   final void Function(Uri uri)? onLinkTap;
   final InlineLinkBuilder? inlineLinkBuilder;
@@ -290,7 +303,7 @@ class _Cell extends StatelessWidget {
       latex: latex,
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: padding,
       child: Text.rich(
         TextSpan(children: result.spans),
         textAlign: _textAlign(alignment),

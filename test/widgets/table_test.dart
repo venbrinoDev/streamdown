@@ -125,6 +125,50 @@ void main() {
   });
 
   group('Streamdown — table horizontal scroll', () {
+    testWidgets('narrow tables use compact columns and cell type', (
+      tester,
+    ) async {
+      const md =
+          '| Type | Price | Good for | Trade-off |\n'
+          '|---|---|---|---|\n'
+          '| On-ear | 60000 | A lighter compact headset | Less isolation |\n';
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 350,
+              child: Streamdown.text(
+                md,
+                textStyle: TextStyle(fontSize: 16, height: 1.72),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final table = tester.widget<Table>(find.byType(Table));
+      expect((table.defaultColumnWidth as FixedColumnWidth).value, 148);
+      final cell = tester
+          .widgetList<RichText>(find.byType(RichText))
+          .firstWhere(
+            (text) => text.text.toPlainText().contains('lighter compact'),
+          );
+      TextStyle? cellStyle;
+      void inspect(InlineSpan span) {
+        if (span is! TextSpan) return;
+        if ((span.text ?? '').contains('lighter compact')) {
+          cellStyle = span.style;
+        }
+        for (final child in span.children ?? const <InlineSpan>[]) {
+          inspect(child);
+        }
+      }
+
+      inspect(cell.text);
+      expect(cellStyle?.fontSize, 13);
+      expect(cellStyle?.height, 1.4);
+    });
+
     testWidgets('wide table is wrapped in a SingleChildScrollView', (
       tester,
     ) async {
