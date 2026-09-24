@@ -11,6 +11,7 @@ import '../parser/ast.dart';
 import 'animation.dart';
 import 'code_block.dart';
 import 'inline_spans.dart';
+import 'image_group.dart';
 import 'syntax_theme.dart';
 import 'table.dart' as table_widget;
 
@@ -27,6 +28,7 @@ class AstRenderer extends StatefulWidget {
     this.onLinkTap,
     this.inlineLinkBuilder,
     this.imageBuilder,
+    this.imageGroupBuilder,
     this.codeBlockBuilder,
     this.directiveBuilder,
     this.latex = false,
@@ -43,6 +45,7 @@ class AstRenderer extends StatefulWidget {
   final void Function(Uri uri)? onLinkTap;
   final InlineLinkBuilder? inlineLinkBuilder;
   final MarkdownImageBuilder? imageBuilder;
+  final MarkdownImageGroupBuilder? imageGroupBuilder;
   final SyntaxTheme syntaxTheme;
   final CodeBlockBuilder? codeBlockBuilder;
   final DirectiveBuilder? directiveBuilder;
@@ -66,16 +69,52 @@ class _AstRendererState extends State<AstRenderer> {
       mainAxisSize: MainAxisSize.min,
       spacing: 12,
       children: [
-        for (final (index, node) in widget.document.children.indexed)
-          StreamdownAnimatedBlock(
-            key: _blockKey(index, node),
-            enabled: useBlockAnimation,
-            config: widget.animateConfig,
-            child: _renderBlock(context, index, node),
-          ),
+        ..._renderChildren(context, useBlockAnimation),
         if (widget.showCaret) const StreamdownCaret(),
       ],
     );
+  }
+
+  List<Widget> _renderChildren(BuildContext context, bool useBlockAnimation) {
+    final nodes = widget.document.children;
+    final rendered = <Widget>[];
+    var index = 0;
+    while (index < nodes.length) {
+      final group = widget.imageGroupBuilder == null
+          ? null
+          : readImageGroup(nodes, index);
+      if (group != null) {
+        rendered.add(
+          StreamdownAnimatedBlock(
+            key: ValueKey('${widget.keySeed}:image-group:$index'),
+            enabled: useBlockAnimation,
+            config: widget.animateConfig,
+            child: Builder(
+              builder: (context) => widget.imageGroupBuilder!(
+                context,
+                group.items,
+                group.isComplete &&
+                    (group.endIndex < nodes.length ||
+                        widget.document.isComplete),
+              ),
+            ),
+          ),
+        );
+        index = group.endIndex;
+        continue;
+      }
+      final node = nodes[index];
+      rendered.add(
+        StreamdownAnimatedBlock(
+          key: _blockKey(index, node),
+          enabled: useBlockAnimation,
+          config: widget.animateConfig,
+          child: _renderBlock(context, index, node),
+        ),
+      );
+      index++;
+    }
+    return rendered;
   }
 
   Widget _renderBlock(BuildContext context, int index, AstNode node) {

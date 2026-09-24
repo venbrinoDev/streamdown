@@ -18,6 +18,7 @@ import '../parser/tokenizer.dart';
 import 'animation.dart';
 import 'ast_renderer.dart';
 import 'inline_spans.dart';
+import 'image_group.dart';
 import 'syntax_theme.dart';
 
 class Streamdown extends StatefulWidget {
@@ -30,6 +31,7 @@ class Streamdown extends StatefulWidget {
     this.onLinkTap,
     this.inlineLinkBuilder,
     this.imageBuilder,
+    this.imageGroupBuilder,
     this.padding,
     this.syntaxTheme,
     this.codeBlockBuilder,
@@ -55,6 +57,7 @@ class Streamdown extends StatefulWidget {
     this.onLinkTap,
     this.inlineLinkBuilder,
     this.imageBuilder,
+    this.imageGroupBuilder,
     this.padding,
     this.syntaxTheme,
     this.codeBlockBuilder,
@@ -79,6 +82,7 @@ class Streamdown extends StatefulWidget {
   final void Function(Uri uri)? onLinkTap;
   final InlineLinkBuilder? inlineLinkBuilder;
   final MarkdownImageBuilder? imageBuilder;
+  final MarkdownImageGroupBuilder? imageGroupBuilder;
   final EdgeInsetsGeometry? padding;
   final SyntaxTheme? syntaxTheme;
   final CodeBlockBuilder? codeBlockBuilder;
@@ -230,6 +234,7 @@ class _StreamdownState extends State<Streamdown> {
       onLinkTap: widget.onLinkTap,
       inlineLinkBuilder: widget.inlineLinkBuilder,
       imageBuilder: widget.imageBuilder,
+      imageGroupBuilder: widget.imageGroupBuilder,
       syntaxTheme: widget.syntaxTheme ?? SyntaxTheme.auto(context),
       codeBlockBuilder: widget.codeBlockBuilder,
       directiveBuilder: widget.directiveBuilder,
