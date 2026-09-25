@@ -1,13 +1,15 @@
 // GFM table widget with copy controls.
 //
 // Each cell can contain inline markdown (bold, italic, links, inline code).
-// Column widths use `IntrinsicColumnWidth` — they grow as wider content
-// arrives but never shrink, which gives stable layout during streaming.
+// Columns are sized from the viewport rather than the intrinsic width of
+// every cell. This keeps streamed rows stable without repeatedly measuring
+// the whole table.
 //
 // Wide tables wrap in a horizontal `SingleChildScrollView`. A copy dropdown
 // above the table lets users export as CSV, TSV, or Markdown.
 
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -84,12 +86,16 @@ class TableWidget extends StatefulWidget {
     required this.node,
     this.baseStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
   });
 
   final TableNode node;
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
 
   @override
@@ -98,7 +104,6 @@ class TableWidget extends StatefulWidget {
 
 class _TableWidgetState extends State<TableWidget> {
   final List<GestureRecognizer> _recognizers = <GestureRecognizer>[];
-  bool _showMenu = false;
   bool _copied = false;
   Timer? _resetTimer;
 
@@ -111,7 +116,6 @@ class _TableWidgetState extends State<TableWidget> {
     Clipboard.setData(ClipboardData(text: content));
     setState(() {
       _copied = true;
-      _showMenu = false;
     });
     _resetTimer?.cancel();
     _resetTimer = Timer(const Duration(seconds: 2), () {
@@ -138,117 +142,129 @@ class _TableWidgetState extends State<TableWidget> {
     _recognizers.clear();
 
     final theme = Theme.of(context);
-    final borderColor = theme.colorScheme.outlineVariant;
-    final headerBg = theme.colorScheme.surfaceContainerHighest;
+    // outlineVariant is often tinted with an app's accent. Tables need quiet
+    // structure, so derive their rules from the foreground instead.
+    final borderColor = theme.colorScheme.onSurface.withValues(alpha: 0.12);
+    final headerBg = theme.colorScheme.surfaceContainerHigh;
+    final columnCount = widget.node.headers.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            SizedBox(
-              height: 32,
-              child: Stack(
-                children: <Widget>[
-                  IconButton(
-                    tooltip: _copied ? 'Copied' : 'Copy table',
-                    icon: Icon(
-                      _copied ? Icons.check : Icons.content_copy_outlined,
-                      size: 16,
-                      color: _copied
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
-                    ),
-                    onPressed: () => setState(() => _showMenu = !_showMenu),
-                  ),
-                  if (_showMenu)
-                    Positioned(
-                      top: 32,
-                      right: 0,
-                      child: Material(
-                        elevation: 4,
-                        borderRadius: BorderRadius.circular(6),
-                        child: IntrinsicWidth(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              _menuItem('Markdown', () => _copy('md')),
-                              _menuItem('CSV', () => _copy('csv')),
-                              _menuItem('TSV', () => _copy('tsv')),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: PopupMenuButton<String>(
+            tooltip: _copied ? 'Copied' : 'Copy table',
+            onSelected: _copy,
+            icon: Icon(
+              _copied ? Icons.check : Icons.copy_outlined,
+              size: 17,
+              color: _copied
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
-          ],
-        ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Table(
-            defaultColumnWidth: const IntrinsicColumnWidth(),
-            border: TableBorder.all(color: borderColor),
-            children: <TableRow>[
-              TableRow(
-                decoration: BoxDecoration(color: headerBg),
-                children: <Widget>[
-                  for (var i = 0; i < widget.node.headers.length; i++)
-                    _Cell(
-                      text: widget.node.headers[i],
-                      alignment: _safeAlignment(i),
-                      recognizers: _recognizers,
-                      baseStyle: (widget.baseStyle ?? const TextStyle())
-                          .copyWith(fontWeight: FontWeight.bold),
-                      onLinkTap: widget.onLinkTap,
-                      latex: widget.latex,
-                    ),
-                ],
-              ),
-              for (final row in widget.node.rows)
-                TableRow(
-                  children: <Widget>[
-                    for (var i = 0; i < widget.node.headers.length; i++)
-                      _Cell(
-                        text: i < row.length ? row[i] : '',
-                        alignment: _safeAlignment(i),
-                        recognizers: _recognizers,
-                        baseStyle: widget.baseStyle,
-                        onLinkTap: widget.onLinkTap,
-                        latex: widget.latex,
-                      ),
-                  ],
-                ),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'md', child: Text('Copy Markdown')),
+              PopupMenuItem(value: 'csv', child: Text('Copy CSV')),
+              PopupMenuItem(value: 'tsv', child: Text('Copy TSV')),
             ],
           ),
+        ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (columnCount == 0) return const SizedBox.shrink();
+            final viewportWidth = constraints.maxWidth.isFinite
+                ? constraints.maxWidth
+                : 720.0;
+            final compact = viewportWidth < 560;
+            final columnWidth = (viewportWidth / columnCount).clamp(
+              compact ? 148.0 : 180.0,
+              280.0,
+            );
+            final tableWidth = math.max(
+              viewportWidth,
+              columnWidth * columnCount,
+            );
+            final cellStyle = compact
+                ? (widget.baseStyle ?? const TextStyle()).copyWith(
+                    fontSize: math.min(widget.baseStyle?.fontSize ?? 14, 13),
+                    height: math.min(widget.baseStyle?.height ?? 1.4, 1.4),
+                  )
+                : widget.baseStyle;
+            final cellPadding = compact
+                ? const EdgeInsets.symmetric(horizontal: 10, vertical: 9)
+                : const EdgeInsets.symmetric(horizontal: 14, vertical: 12);
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: borderColor),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: Table(
+                      defaultColumnWidth: FixedColumnWidth(
+                        tableWidth / columnCount,
+                      ),
+                      border: TableBorder(
+                        horizontalInside: BorderSide(color: borderColor),
+                      ),
+                      children: <TableRow>[
+                        TableRow(
+                          decoration: BoxDecoration(color: headerBg),
+                          children: <Widget>[
+                            for (var i = 0; i < columnCount; i++)
+                              _Cell(
+                                text: widget.node.headers[i],
+                                alignment: _safeAlignment(i),
+                                recognizers: _recognizers,
+                                baseStyle: (cellStyle ?? const TextStyle())
+                                    .copyWith(fontWeight: FontWeight.w600),
+                                padding: cellPadding,
+                                onLinkTap: widget.onLinkTap,
+                                inlineLinkBuilder: widget.inlineLinkBuilder,
+                                imageBuilder: widget.imageBuilder,
+                                latex: widget.latex,
+                              ),
+                          ],
+                        ),
+                        for (final row in widget.node.rows)
+                          TableRow(
+                            children: <Widget>[
+                              for (var i = 0; i < columnCount; i++)
+                                _Cell(
+                                  text: i < row.length ? row[i] : '',
+                                  alignment: _safeAlignment(i),
+                                  recognizers: _recognizers,
+                                  baseStyle: cellStyle,
+                                  padding: cellPadding,
+                                  onLinkTap: widget.onLinkTap,
+                                  inlineLinkBuilder: widget.inlineLinkBuilder,
+                                  imageBuilder: widget.imageBuilder,
+                                  latex: widget.latex,
+                                ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
   }
 
-  Widget _menuItem(String label, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Text(label, style: const TextStyle(fontSize: 13)),
-      ),
-    );
-  }
-
   TableAlignment _safeAlignment(int column) =>
       column < widget.node.alignments.length
-          ? widget.node.alignments[column]
-          : TableAlignment.none;
+      ? widget.node.alignments[column]
+      : TableAlignment.none;
 }
 
 class _Cell extends StatelessWidget {
@@ -257,15 +273,21 @@ class _Cell extends StatelessWidget {
     required this.alignment,
     required this.recognizers,
     this.baseStyle,
+    required this.padding,
     this.onLinkTap,
+    this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
   });
 
   final String text;
   final TableAlignment alignment;
   final TextStyle? baseStyle;
+  final EdgeInsets padding;
   final List<GestureRecognizer> recognizers;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
 
   @override
@@ -275,11 +297,13 @@ class _Cell extends StatelessWidget {
       context,
       baseStyle: baseStyle,
       onLinkTap: onLinkTap,
+      inlineLinkBuilder: inlineLinkBuilder,
+      imageBuilder: imageBuilder,
       recognizers: recognizers,
       latex: latex,
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: padding,
       child: Text.rich(
         TextSpan(children: result.spans),
         textAlign: _textAlign(alignment),

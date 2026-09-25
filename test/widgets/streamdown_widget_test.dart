@@ -166,6 +166,116 @@ void main() {
       final richText = tester.widget<RichText>(find.byType(RichText).first);
       expect(richText.text.toPlainText(), contains('https://example.com'));
     });
+
+    testWidgets('inline link builder replaces only selected links', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Streamdown.text(
+              'Read [the guide](https://example.com/guide) '
+              'and [Example](https://example.com/story).',
+              inlineLinkBuilder: (context, label, uri) => label == 'Example'
+                  ? Text('Source: $label', key: const Key('source-chip'))
+                  : null,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byKey(const Key('source-chip')), findsOneWidget);
+      final richText = tester.widget<RichText>(find.byType(RichText).first);
+      expect(richText.text.toPlainText(), contains('the guide'));
+      expect(richText.text.toPlainText(), isNot(contains('Source: Example')));
+    });
+
+    testWidgets('image builder receives standalone Markdown images', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Streamdown.text(
+              '![Headphones](https://example.com/photo.jpg)\n',
+              imageBuilder: (context, alt, url, isBlock) {
+                expect(alt, 'Headphones');
+                expect(url, 'https://example.com/photo.jpg');
+                expect(isBlock, isTrue);
+                return const SizedBox(key: Key('custom-image'), height: 24);
+              },
+            ),
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('custom-image')), findsOneWidget);
+      expect(find.byType(Image), findsNothing);
+    });
+
+    testWidgets('image groups render from the first image and grow in place', (
+      tester,
+    ) async {
+      final controller = StreamController<String>();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Streamdown(
+              stream: controller.stream,
+              imageGroupBuilder: (context, items, isComplete) => Text(
+                'gallery:${items.length}:${items.first.title}',
+                key: const Key('image-group'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      controller.add('Intro.\n\n**First**\n![First](https://example.com/one');
+      await tester.pump();
+      expect(find.byKey(const Key('image-group')), findsNothing);
+      controller.add('.jpg)\n');
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('gallery:1:First'), findsOneWidget);
+      final element = tester.element(find.byKey(const Key('image-group')));
+      controller.add('\n**Second**\n![Second](https://example.com/two.jpg)\n');
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('gallery:2:First'), findsOneWidget);
+      expect(
+        tester.element(find.byKey(const Key('image-group'))),
+        same(element),
+      );
+      expect(find.textContaining('Intro.', findRichText: true), findsWidgets);
+      await controller.close();
+      await tester.pump();
+      expect(find.text('gallery:2:First'), findsOneWidget);
+    });
+
+    testWidgets('image grouping is opt-in and preserves later prose', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Streamdown.text(
+              '**First**\n![First](https://example.com/one.jpg)\n\n'
+              '**Second**\n![Second](https://example.com/two.jpg)\n\n'
+              'Verdict follows.',
+              imageGroupBuilder: (context, items, isComplete) => Text(
+                'gallery:${items.length}',
+                key: const Key('image-group'),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('gallery:2'), findsOneWidget);
+      expect(
+        find.textContaining('Verdict follows.', findRichText: true),
+        findsWidgets,
+      );
+    });
   });
 
   group('Streamdown — selection', () {

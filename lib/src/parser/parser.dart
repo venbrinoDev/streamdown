@@ -33,6 +33,7 @@ class Parser {
   ListItemNode? _openItem;
   BlockquoteNode? _openQuote;
   TableNode? _openTable;
+  DirectiveNode? _openDirective;
 
   // Lookahead state: a TableRowToken is held until we know whether the next
   // token is a TableSeparatorToken (in which case it's a table header) or
@@ -53,6 +54,11 @@ class Parser {
   /// lists, tables, blockquotes). An unclosed code block stays `isComplete:
   /// false` as a signal that the stream ended mid-block.
   void complete() {
+    if (_openDirective != null) {
+      _openDirective!.isValid = false;
+      _openDirective!.isComplete = true;
+      _openDirective = null;
+    }
     _flushPendingRowAsParagraph();
     _closeListIfOpen();
     _closeTableIfOpen();
@@ -68,6 +74,32 @@ class Parser {
   // ──────────────────────────────────────────────────────────────────────
 
   void _handle(Token token) {
+    if (token is DirectiveFieldToken) {
+      _openDirective?.fields
+          .putIfAbsent(token.key, () => <String>[])
+          .add(token.value);
+      return;
+    }
+    if (token is DirectiveInvalidToken) {
+      _openDirective?.isValid = false;
+      return;
+    }
+    if (token is DirectiveCloseToken) {
+      _openDirective?.isComplete = true;
+      _openDirective = null;
+      return;
+    }
+    if (token is DirectiveOpenToken) {
+      _flushPendingRowAsParagraph();
+      _closeListIfOpen();
+      _closeTableIfOpen();
+      _closeQuoteIfOpen();
+      _closeLeafIfOpen();
+      final node = DirectiveNode(_id(), name: token.name);
+      _appendBlock(node);
+      _openDirective = node;
+      return;
+    }
     // Pending-row lookahead must run before any other dispatch.
     if (_pendingRow != null) {
       if (token is TableSeparatorToken) {
@@ -186,6 +218,11 @@ class Parser {
           AutolinkToken() ||
           HardBreakToken() ||
           MathToken():
+        break;
+      case DirectiveOpenToken() ||
+          DirectiveFieldToken() ||
+          DirectiveInvalidToken() ||
+          DirectiveCloseToken():
         break;
     }
   }

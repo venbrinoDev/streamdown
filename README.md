@@ -67,6 +67,46 @@ Streamdown(
 )
 ```
 
+### Line-oriented native blocks
+
+Applications can opt in to `:::jv-*` directives and render them with a
+`directiveBuilder`. Markdown before and after a directive keeps streaming as
+usual. Inside a directive, only completed `key: value` lines are exposed to the
+builder; an open directive can therefore update the same widget as fields
+arrive. The application is responsible for validating names and fields.
+
+```dart
+Streamdown(
+  stream: answerStream,
+  directiveBuilder: (context, directive) {
+    if (directive.name == 'place') {
+      return PlaceCard(
+        title: directive.first('title'),
+        description: directive.first('description'),
+        isComplete: directive.isComplete,
+      );
+    }
+    return const SizedBox.shrink();
+  },
+)
+```
+
+The streamed text can contain:
+
+```text
+Here is the place I recommend.
+
+:::jv-place
+title: Central Park
+description: A large public park in Manhattan.
+:::
+
+You can visit in the morning.
+```
+
+Do not place blank lines inside a directive. Malformed directives are replaced
+with a short readable fallback; their raw syntax is never shown.
+
 ### Animation
 
 Streaming Markdown fades in at block level while prose remains continuous text with native Flutter line wrapping:

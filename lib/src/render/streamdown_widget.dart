@@ -17,6 +17,8 @@ import '../parser/remend.dart';
 import '../parser/tokenizer.dart';
 import 'animation.dart';
 import 'ast_renderer.dart';
+import 'inline_spans.dart';
+import 'image_group.dart';
 import 'syntax_theme.dart';
 
 class Streamdown extends StatefulWidget {
@@ -27,9 +29,13 @@ class Streamdown extends StatefulWidget {
     this.textStyle,
     this.selectable = true,
     this.onLinkTap,
+    this.inlineLinkBuilder,
+    this.imageBuilder,
+    this.imageGroupBuilder,
     this.padding,
     this.syntaxTheme,
     this.codeBlockBuilder,
+    this.directiveBuilder,
     this.latex = false,
     this.errorBuilder,
     this.parseIncompleteMarkdown = true,
@@ -49,9 +55,13 @@ class Streamdown extends StatefulWidget {
     this.textStyle,
     this.selectable = true,
     this.onLinkTap,
+    this.inlineLinkBuilder,
+    this.imageBuilder,
+    this.imageGroupBuilder,
     this.padding,
     this.syntaxTheme,
     this.codeBlockBuilder,
+    this.directiveBuilder,
     this.latex = false,
     this.errorBuilder,
     this.parseIncompleteMarkdown = true,
@@ -70,9 +80,13 @@ class Streamdown extends StatefulWidget {
   final TextStyle? textStyle;
   final bool selectable;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
+  final MarkdownImageGroupBuilder? imageGroupBuilder;
   final EdgeInsetsGeometry? padding;
   final SyntaxTheme? syntaxTheme;
   final CodeBlockBuilder? codeBlockBuilder;
+  final DirectiveBuilder? directiveBuilder;
   final bool latex;
   final Widget Function(
     BuildContext context,
@@ -136,7 +150,7 @@ class _StreamdownState extends State<Streamdown> {
   }
 
   void _initPipeline() {
-    _tokenizer = Tokenizer();
+    _tokenizer = Tokenizer(enableDirectives: widget.directiveBuilder != null);
     _parser = Parser();
     _renderGeneration += 1;
     _streamError = null;
@@ -173,10 +187,16 @@ class _StreamdownState extends State<Streamdown> {
     _accumulatedBuffer += chunk;
     if (widget.parseIncompleteMarkdown) {
       final healed = remend(_accumulatedBuffer, widget.remendOptions);
-      _tokenizer = Tokenizer();
+      _tokenizer = Tokenizer(enableDirectives: widget.directiveBuilder != null);
       _parser = Parser();
       _parser.feed(_tokenizer.feed(healed));
-      _parser.feed(_tokenizer.complete());
+      // Do not promote a half-written directive field (or opener) into a
+      // visible block. Ordinary Markdown keeps its provisional behaviour.
+      if (!_tokenizer.insideDirective &&
+          (widget.directiveBuilder == null ||
+              !_tokenizer.pendingLine.startsWith(':::'))) {
+        _parser.feed(_tokenizer.complete());
+      }
     } else {
       _parser.feed(_tokenizer.feed(chunk));
     }
@@ -188,7 +208,7 @@ class _StreamdownState extends State<Streamdown> {
       // The streaming snapshots are healed provisionally. Reconcile the final
       // raw source through the same renderer instead of leaving synthetic
       // remend characters in the completed document.
-      _tokenizer = Tokenizer();
+      _tokenizer = Tokenizer(enableDirectives: widget.directiveBuilder != null);
       _parser = Parser();
       _parser.feed(_tokenizer.feed(_accumulatedBuffer));
     }
@@ -212,8 +232,12 @@ class _StreamdownState extends State<Streamdown> {
       keySeed: _renderGeneration,
       textStyle: widget.textStyle,
       onLinkTap: widget.onLinkTap,
+      inlineLinkBuilder: widget.inlineLinkBuilder,
+      imageBuilder: widget.imageBuilder,
+      imageGroupBuilder: widget.imageGroupBuilder,
       syntaxTheme: widget.syntaxTheme ?? SyntaxTheme.auto(context),
       codeBlockBuilder: widget.codeBlockBuilder,
+      directiveBuilder: widget.directiveBuilder,
       latex: widget.latex,
       cjk: widget.cjk,
       lineNumbers: widget.lineNumbers,

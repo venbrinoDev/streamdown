@@ -9,6 +9,10 @@ library;
 
 export 'src/render/streamdown_widget.dart' show Streamdown;
 export 'src/render/syntax_theme.dart' show CodeBlockBuilder, SyntaxTheme;
+export 'src/render/ast_renderer.dart' show DirectiveBuilder;
+export 'src/render/image_group.dart'
+    show MarkdownImageGroupBuilder, MarkdownImageGroupItem;
+export 'src/parser/ast.dart' show DirectiveNode;
 export 'src/parser/remend.dart'
     show RemendOptions, RemendLinkMode, RemendHandler;
 export 'src/render/table.dart'

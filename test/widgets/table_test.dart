@@ -51,6 +51,18 @@ void main() {
   });
 
   group('Streamdown — inline markdown in cells', () {
+    testWidgets('product images stay inside their table cells', (tester) async {
+      const md =
+          '| Model | Price |\n|---|---|\n| ![Headphones](https://example.com/headphones.png) | \$99 |\n';
+      await pumpStatic(tester, md);
+
+      expect(find.byType(Table), findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(Table), matching: find.byType(Image)),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('bold delimiters are stripped and the text remains', (
       tester,
     ) async {
@@ -113,6 +125,50 @@ void main() {
   });
 
   group('Streamdown — table horizontal scroll', () {
+    testWidgets('narrow tables use compact columns and cell type', (
+      tester,
+    ) async {
+      const md =
+          '| Type | Price | Good for | Trade-off |\n'
+          '|---|---|---|---|\n'
+          '| On-ear | 60000 | A lighter compact headset | Less isolation |\n';
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 350,
+              child: Streamdown.text(
+                md,
+                textStyle: TextStyle(fontSize: 16, height: 1.72),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final table = tester.widget<Table>(find.byType(Table));
+      expect((table.defaultColumnWidth as FixedColumnWidth).value, 148);
+      final cell = tester
+          .widgetList<RichText>(find.byType(RichText))
+          .firstWhere(
+            (text) => text.text.toPlainText().contains('lighter compact'),
+          );
+      TextStyle? cellStyle;
+      void inspect(InlineSpan span) {
+        if (span is! TextSpan) return;
+        if ((span.text ?? '').contains('lighter compact')) {
+          cellStyle = span.style;
+        }
+        for (final child in span.children ?? const <InlineSpan>[]) {
+          inspect(child);
+        }
+      }
+
+      inspect(cell.text);
+      expect(cellStyle?.fontSize, 13);
+      expect(cellStyle?.height, 1.4);
+    });
+
     testWidgets('wide table is wrapped in a SingleChildScrollView', (
       tester,
     ) async {
@@ -127,6 +183,55 @@ void main() {
         matching: find.byType(SingleChildScrollView),
       );
       expect(scrollView, findsWidgets);
+    });
+
+    testWidgets('uses fixed columns and readable row separators', (
+      tester,
+    ) async {
+      const md =
+          '| Product | Price | Battery |\n|---|---|---|\n| One | \$99 | 30 h |\n';
+      await pumpStatic(tester, md);
+
+      final table = tester.widget<Table>(find.byType(Table));
+      expect(table.defaultColumnWidth, isA<FixedColumnWidth>());
+      expect(table.border?.horizontalInside.style, BorderStyle.solid);
+      expect(table.border?.verticalInside.style, BorderStyle.none);
+    });
+
+    testWidgets('table rules stay neutral with a purple app accent', (
+      tester,
+    ) async {
+      const md = '| Model | Price |\n|---|---|\n| One | \$99 |\n';
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.purple,
+              brightness: Brightness.dark,
+            ).copyWith(onSurface: Colors.white, outlineVariant: Colors.purple),
+          ),
+          home: const Scaffold(body: Streamdown.text(md)),
+        ),
+      );
+
+      final table = tester.widget<Table>(find.byType(Table));
+      expect(
+        table.border?.horizontalInside.color,
+        Colors.white.withValues(alpha: 0.12),
+      );
+    });
+
+    testWidgets('copy menu stays reachable outside the table viewport', (
+      tester,
+    ) async {
+      const md = '| Product | Price |\n|---|---|\n| One | \$99 |\n';
+      await pumpStatic(tester, md);
+
+      await tester.tap(find.byTooltip('Copy table'));
+      await tester.pumpAndSettle();
+      expect(find.text('Copy Markdown'), findsOneWidget);
+      expect(find.text('Copy CSV'), findsOneWidget);
+      expect(find.text('Copy TSV'), findsOneWidget);
     });
   });
 

@@ -11,8 +11,12 @@ import '../parser/ast.dart';
 import 'animation.dart';
 import 'code_block.dart';
 import 'inline_spans.dart';
+import 'image_group.dart';
 import 'syntax_theme.dart';
 import 'table.dart' as table_widget;
+
+typedef DirectiveBuilder =
+    Widget Function(BuildContext context, DirectiveNode directive);
 
 class AstRenderer extends StatefulWidget {
   const AstRenderer({
@@ -22,7 +26,11 @@ class AstRenderer extends StatefulWidget {
     required this.keySeed,
     this.textStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
+    this.imageBuilder,
+    this.imageGroupBuilder,
     this.codeBlockBuilder,
+    this.directiveBuilder,
     this.latex = false,
     this.cjk = false,
     this.lineNumbers = true,
@@ -35,8 +43,12 @@ class AstRenderer extends StatefulWidget {
   final int keySeed;
   final TextStyle? textStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
+  final MarkdownImageGroupBuilder? imageGroupBuilder;
   final SyntaxTheme syntaxTheme;
   final CodeBlockBuilder? codeBlockBuilder;
+  final DirectiveBuilder? directiveBuilder;
   final bool latex;
   final bool cjk;
   final bool lineNumbers;
@@ -57,16 +69,52 @@ class _AstRendererState extends State<AstRenderer> {
       mainAxisSize: MainAxisSize.min,
       spacing: 12,
       children: [
-        for (final (index, node) in widget.document.children.indexed)
-          StreamdownAnimatedBlock(
-            key: _blockKey(index, node),
-            enabled: useBlockAnimation,
-            config: widget.animateConfig,
-            child: _renderBlock(context, index, node),
-          ),
+        ..._renderChildren(context, useBlockAnimation),
         if (widget.showCaret) const StreamdownCaret(),
       ],
     );
+  }
+
+  List<Widget> _renderChildren(BuildContext context, bool useBlockAnimation) {
+    final nodes = widget.document.children;
+    final rendered = <Widget>[];
+    var index = 0;
+    while (index < nodes.length) {
+      final group = widget.imageGroupBuilder == null
+          ? null
+          : readImageGroup(nodes, index);
+      if (group != null) {
+        rendered.add(
+          StreamdownAnimatedBlock(
+            key: ValueKey('${widget.keySeed}:image-group:$index'),
+            enabled: useBlockAnimation,
+            config: widget.animateConfig,
+            child: Builder(
+              builder: (context) => widget.imageGroupBuilder!(
+                context,
+                group.items,
+                group.isComplete &&
+                    (group.endIndex < nodes.length ||
+                        widget.document.isComplete),
+              ),
+            ),
+          ),
+        );
+        index = group.endIndex;
+        continue;
+      }
+      final node = nodes[index];
+      rendered.add(
+        StreamdownAnimatedBlock(
+          key: _blockKey(index, node),
+          enabled: useBlockAnimation,
+          config: widget.animateConfig,
+          child: _renderBlock(context, index, node),
+        ),
+      );
+      index++;
+    }
+    return rendered;
   }
 
   Widget _renderBlock(BuildContext context, int index, AstNode node) {
@@ -77,6 +125,8 @@ class _AstRendererState extends State<AstRenderer> {
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
+        inlineLinkBuilder: widget.inlineLinkBuilder,
+        imageBuilder: widget.imageBuilder,
         latex: widget.latex,
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
@@ -88,6 +138,8 @@ class _AstRendererState extends State<AstRenderer> {
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
+        inlineLinkBuilder: widget.inlineLinkBuilder,
+        imageBuilder: widget.imageBuilder,
         latex: widget.latex,
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
@@ -107,6 +159,8 @@ class _AstRendererState extends State<AstRenderer> {
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
+        inlineLinkBuilder: widget.inlineLinkBuilder,
+        imageBuilder: widget.imageBuilder,
         latex: widget.latex,
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
@@ -118,6 +172,8 @@ class _AstRendererState extends State<AstRenderer> {
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
+        inlineLinkBuilder: widget.inlineLinkBuilder,
+        imageBuilder: widget.imageBuilder,
         latex: widget.latex,
         cjk: widget.cjk,
         animateConfig: widget.animateConfig,
@@ -131,11 +187,18 @@ class _AstRendererState extends State<AstRenderer> {
         builder: widget.codeBlockBuilder,
         showLineNumbers: widget.lineNumbers,
       ),
+      DirectiveNode() =>
+        widget.directiveBuilder?.call(context, node) ??
+            (node.isComplete
+                ? const Text('Visual item unavailable')
+                : const SizedBox.shrink()),
       TableNode() => table_widget.TableWidget(
         key: key,
         node: node,
         baseStyle: widget.textStyle,
         onLinkTap: widget.onLinkTap,
+        inlineLinkBuilder: widget.inlineLinkBuilder,
+        imageBuilder: widget.imageBuilder,
         latex: widget.latex,
       ),
       DocumentNode() || ListItemNode() => const SizedBox.shrink(),
@@ -156,6 +219,8 @@ class _Heading extends StatefulWidget {
     required this.node,
     this.baseStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -166,6 +231,8 @@ class _Heading extends StatefulWidget {
   final HeadingNode node;
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -215,6 +282,8 @@ class _HeadingState extends State<_Heading>
         widget.node.isComplete != oldWidget.node.isComplete ||
         widget.baseStyle != oldWidget.baseStyle ||
         widget.onLinkTap != oldWidget.onLinkTap ||
+        widget.inlineLinkBuilder != oldWidget.inlineLinkBuilder ||
+        widget.imageBuilder != oldWidget.imageBuilder ||
         widget.animateConfig != oldWidget.animateConfig ||
         widget.streaming != oldWidget.streaming ||
         widget.latex != oldWidget.latex ||
@@ -278,6 +347,8 @@ class _HeadingState extends State<_Heading>
       context,
       baseStyle: merged,
       onLinkTap: widget.onLinkTap,
+      inlineLinkBuilder: widget.inlineLinkBuilder,
+      imageBuilder: widget.imageBuilder,
       recognizers: _recognizers,
       latex: widget.latex,
       cjk: widget.cjk,
@@ -323,6 +394,8 @@ class _Paragraph extends StatefulWidget {
     required this.node,
     this.baseStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -333,6 +406,8 @@ class _Paragraph extends StatefulWidget {
   final ParagraphNode node;
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -382,6 +457,8 @@ class _ParagraphState extends State<_Paragraph>
         widget.node.isComplete != oldWidget.node.isComplete ||
         widget.baseStyle != oldWidget.baseStyle ||
         widget.onLinkTap != oldWidget.onLinkTap ||
+        widget.inlineLinkBuilder != oldWidget.inlineLinkBuilder ||
+        widget.imageBuilder != oldWidget.imageBuilder ||
         widget.animateConfig != oldWidget.animateConfig ||
         widget.streaming != oldWidget.streaming ||
         widget.latex != oldWidget.latex ||
@@ -424,12 +501,53 @@ class _ParagraphState extends State<_Paragraph>
       r.dispose();
     }
     _recognizers.clear();
+    final standaloneImage = RegExp(
+      r'^!\[([^\]]*)\]\((https?://[^\s)]+)(?:\s+"[^"]*")?\)$',
+    ).firstMatch(widget.node.text.trim());
+    if (standaloneImage != null) {
+      final alt = standaloneImage.group(1)!.trim();
+      final url = standaloneImage.group(2)!;
+      final replacement = widget.imageBuilder?.call(context, alt, url, true);
+      if (replacement != null) {
+        _renderedTextLength = 0;
+        if (widget.node.isComplete) _cached = replacement;
+        return replacement;
+      }
+      final result = Semantics(
+        label: alt.isEmpty ? 'Image' : alt,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720, maxHeight: 440),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              url,
+              fit: BoxFit.contain,
+              alignment: Alignment.centerLeft,
+              errorBuilder: (context, error, stackTrace) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  alt.isEmpty ? 'Image unavailable' : alt,
+                  style: (widget.baseStyle ?? const TextStyle()).copyWith(
+                    color: Theme.of(context).disabledColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      _renderedTextLength = 0;
+      if (widget.node.isComplete) _cached = result;
+      return result;
+    }
 
     final (:spans, :renderedLength) = buildInlineSpans(
       widget.node.text,
       context,
       baseStyle: widget.baseStyle,
       onLinkTap: widget.onLinkTap,
+      inlineLinkBuilder: widget.inlineLinkBuilder,
+      imageBuilder: widget.imageBuilder,
       recognizers: _recognizers,
       latex: widget.latex,
       cjk: widget.cjk,
@@ -475,6 +593,8 @@ class _Blockquote extends StatelessWidget {
     required this.node,
     this.baseStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -485,6 +605,8 @@ class _Blockquote extends StatelessWidget {
   final BlockquoteNode node;
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -517,6 +639,8 @@ class _Blockquote extends StatelessWidget {
         node: child,
         baseStyle: baseStyle,
         onLinkTap: onLinkTap,
+        inlineLinkBuilder: inlineLinkBuilder,
+        imageBuilder: imageBuilder,
         latex: latex,
         cjk: cjk,
         animateConfig: animateConfig,
@@ -528,6 +652,8 @@ class _Blockquote extends StatelessWidget {
         node: child,
         baseStyle: baseStyle,
         onLinkTap: onLinkTap,
+        inlineLinkBuilder: inlineLinkBuilder,
+        imageBuilder: imageBuilder,
         latex: latex,
         cjk: cjk,
         animateConfig: animateConfig,
@@ -548,6 +674,8 @@ class _List extends StatelessWidget {
     required this.node,
     this.baseStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -558,6 +686,8 @@ class _List extends StatelessWidget {
   final ListNode node;
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -579,6 +709,8 @@ class _List extends StatelessWidget {
             marker: _markerFor(node, i, start),
             baseStyle: baseStyle,
             onLinkTap: onLinkTap,
+            inlineLinkBuilder: inlineLinkBuilder,
+            imageBuilder: imageBuilder,
             latex: latex,
             cjk: cjk,
             animateConfig: animateConfig,
@@ -605,6 +737,8 @@ class _ListItem extends StatelessWidget {
     required this.marker,
     this.baseStyle,
     this.onLinkTap,
+    this.inlineLinkBuilder,
+    this.imageBuilder,
     this.latex = false,
     this.cjk = false,
     this.animateConfig,
@@ -616,6 +750,8 @@ class _ListItem extends StatelessWidget {
   final String marker;
   final TextStyle? baseStyle;
   final void Function(Uri uri)? onLinkTap;
+  final InlineLinkBuilder? inlineLinkBuilder;
+  final MarkdownImageBuilder? imageBuilder;
   final bool latex;
   final bool cjk;
   final AnimateConfig? animateConfig;
@@ -642,6 +778,8 @@ class _ListItem extends StatelessWidget {
                     node: child,
                     baseStyle: baseStyle,
                     onLinkTap: onLinkTap,
+                    inlineLinkBuilder: inlineLinkBuilder,
+                    imageBuilder: imageBuilder,
                     latex: latex,
                     cjk: cjk,
                     animateConfig: animateConfig,

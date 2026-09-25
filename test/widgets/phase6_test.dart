@@ -57,6 +57,7 @@ void main() {
         ),
       );
       expect(find.byType(Image), findsOneWidget);
+      expect(find.byType(ClipRRect), findsWidgets);
     });
 
     testWidgets('failing image falls back to [alt] text', (tester) async {

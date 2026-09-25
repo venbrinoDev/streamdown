@@ -13,7 +13,10 @@
 import 'token.dart';
 
 class Tokenizer {
-  Tokenizer();
+  Tokenizer({this.enableDirectives = false});
+
+  /// Recognize `:::jv-*` blocks only for applications that provide a renderer.
+  final bool enableDirectives;
 
   /// Buffer of characters that arrived but haven't yet been terminated by a
   /// newline. Cleared as soon as a `\n` is seen.
@@ -21,6 +24,9 @@ class Tokenizer {
 
   // Fence state — carried across feed() calls.
   bool _insideFence = false;
+  bool _insideDirective = false;
+  bool _discardDirective = false;
+  int _directiveLines = 0;
   String _fenceChar = '';
   int _fenceLength = 0;
   int _fenceIndent = 0;
@@ -68,10 +74,53 @@ class Tokenizer {
 
   /// Whether the tokenizer is currently inside an open fenced code block.
   bool get insideFence => _insideFence;
+  bool get insideDirective => _insideDirective;
 
   // ──────────────────────────────────────────────────────────────────────
 
   void _classifyLine(String line, List<Token> out) {
+    if (_insideDirective) {
+      if (line.trim() == ':::') {
+        out.add(const DirectiveCloseToken());
+        _insideDirective = false;
+        _discardDirective = false;
+        return;
+      }
+      if (line.trim().isEmpty) {
+        out.add(const DirectiveInvalidToken());
+        out.add(const DirectiveCloseToken());
+        out.add(const BlankLineToken());
+        _insideDirective = false;
+        _discardDirective = false;
+        return;
+      }
+      // A second opener recovers from a missing close without swallowing the
+      // remainder of the document.
+      final next = _directiveOpenRe.firstMatch(line);
+      if (next != null) {
+        out.add(const DirectiveInvalidToken());
+        out.add(const DirectiveCloseToken());
+        out.add(DirectiveOpenToken(next.group(1)!));
+        _directiveLines = 0;
+        _discardDirective = false;
+        return;
+      }
+      if (_discardDirective) return;
+      _directiveLines++;
+      if (_directiveLines > 32 || line.length > 2048) {
+        out.add(const DirectiveInvalidToken());
+        _discardDirective = true;
+        return;
+      }
+      final field = _directiveFieldRe.firstMatch(line);
+      if (field == null) {
+        out.add(const DirectiveInvalidToken());
+        _discardDirective = true;
+      } else {
+        out.add(DirectiveFieldToken(field.group(1)!, field.group(2)!));
+      }
+      return;
+    }
     // Lines inside a fence are either the matching close fence or a code line.
     if (_insideFence) {
       if (_isClosingFence(line)) {
@@ -92,6 +141,20 @@ class Tokenizer {
         stripped++;
       }
       out.add(CodeLineToken(content));
+      return;
+    }
+
+    final directive = enableDirectives
+        ? _directiveOpenRe.firstMatch(line)
+        : null;
+    if (directive != null) {
+      _insideDirective = true;
+      _directiveLines = 0;
+      out.add(DirectiveOpenToken(directive.group(1)!));
+      return;
+    }
+    if (enableDirectives && line.trim() == ':::') {
+      out.add(const DirectiveCloseToken());
       return;
     }
 
@@ -343,3 +406,8 @@ final RegExp _orderedListRe = RegExp(r'^(\s*)(\d{1,9})([.)])[ \t]+(.*)$');
 final RegExp _taskBoxRe = RegExp(r'^\[( |x|X)\][ \t]+');
 
 final RegExp _alignCellRe = RegExp(r'^:?-{1,}:?$');
+
+final RegExp _directiveOpenRe = RegExp(r'^:::jv-([a-z][a-z0-9-]{0,31})[ \t]*$');
+final RegExp _directiveFieldRe = RegExp(
+  r'^([a-z][a-z0-9-]{0,31}):[ \t]*(.{0,2000})$',
+);

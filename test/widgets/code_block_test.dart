@@ -21,6 +21,30 @@ void main() {
       expect(find.textContaining('main', findRichText: true), findsWidgets);
     });
 
+    testWidgets('highlight background matches the full code panel', (
+      tester,
+    ) async {
+      const panelColor = Color(0xFF202226);
+      final syntaxTheme = SyntaxTheme(
+        classes: SyntaxTheme.atomOneDark().classes,
+        background: panelColor,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Streamdown.text(
+              '```dart\nvoid main() {}\n```\n',
+              syntaxTheme: syntaxTheme,
+            ),
+          ),
+        ),
+      );
+
+      final highlight = tester.widget<HighlightView>(find.byType(HighlightView));
+      expect(highlight.theme['root']?.backgroundColor, panelColor);
+      expect(syntaxTheme.classes['root']?.backgroundColor, isNot(panelColor));
+    });
+
     testWidgets('shows the language label in the header', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -32,7 +56,7 @@ void main() {
       expect(find.text('python'), findsOneWidget);
     });
 
-    testWidgets('no language label when fence has no info string', (
+    testWidgets('plain-text fence has a useful header and copy action', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -40,8 +64,8 @@ void main() {
           home: Scaffold(body: Streamdown.text('```\nplain\n```\n')),
         ),
       );
-      // The header still exists (for the copy button), but no language text.
-      // We assert by searching for the copy icon — it should be present.
+      expect(find.text('Plain text'), findsOneWidget);
+      expect(find.byIcon(Icons.code_rounded), findsOneWidget);
       expect(find.byIcon(Icons.content_copy_outlined), findsOneWidget);
     });
 
